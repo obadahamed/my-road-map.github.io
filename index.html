@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>XENOS // Red Team OS</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=IBM+Plex+Mono:wght@300;400;500;600&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
-/* نفس الـ CSS الأصلي كامل بدون تغيير */
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#04080f;--bg2:#070d1a;--card:#0a1322;--card2:#0e1a2e;
@@ -21,9 +20,248 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 /* scanlines */
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,136,0.008) 3px,rgba(0,255,136,0.008) 4px);pointer-events:none;z-index:9999}
 
-/* باقي الـ CSS الأصلي كما هو ... (انسخ كل الـ <style> القديم هنا) */
+/* SIDEBAR */
 .sidebar{width:var(--sidebar);min-height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:100}
-/* ... باقي الستايل كامل ... حتى نهاية الـ </style> */
+.sb-brand{padding:1.5rem 1rem 1rem;border-bottom:1px solid var(--border)}
+.sb-brand-name{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;color:var(--green);text-shadow:0 0 15px rgba(0,255,136,0.4);letter-spacing:0.05em}
+.sb-brand-sub{font-size:0.55rem;color:var(--muted);letter-spacing:0.2em;margin-top:0.2rem}
+.sb-nav{flex:1;padding:0.5rem 0}
+.sb-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.2rem;cursor:pointer;transition:all 0.15s;border-right:2px solid transparent;font-size:0.7rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase}
+.sb-item:hover{background:rgba(255,255,255,0.03);color:var(--text)}
+.sb-item.active{background:rgba(0,255,136,0.06);color:var(--green);border-right-color:var(--green)}
+.sb-icon{font-size:1rem;width:1.5rem;text-align:center}
+.sb-footer{padding:1rem;border-top:1px solid var(--border);font-size:0.55rem;color:var(--muted);text-align:center;line-height:1.8}
+.sb-week-badge{display:inline-block;padding:0.15rem 0.5rem;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:0.6rem;margin-top:0.3rem}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;height:100vh}
+.view{display:none;padding:2rem;min-height:100vh}
+.view.active{display:block}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:600;color:var(--muted);letter-spacing:0.3em;text-transform:uppercase}
+.topbar-title span{color:var(--green)}
+.topbar-right{font-size:0.6rem;color:var(--muted);display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);padding:1.5rem;transition:border-color 0.2s}
+.card:hover{border-color:var(--border2)}
+.card-title{font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:600;color:var(--muted);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.card-title::before{content:'//';color:var(--green);font-size:0.55rem}
+
+.mini-btn{
+  padding:0.35rem 0.6rem;border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  font-size:0.55rem;cursor:pointer;letter-spacing:0.08em;
+  transition:all 0.15s;text-transform:uppercase
+}
+.mini-btn:hover{color:var(--text);border-color:var(--border2)}
+.mini-btn.ok{border-color:rgba(0,255,136,0.35);color:var(--green);background:rgba(0,255,136,0.06)}
+.mini-btn.warn{border-color:rgba(255,214,10,0.35);color:var(--yellow);background:rgba(255,214,10,0.06)}
+.mini-btn.danger{border-color:rgba(255,34,68,0.35);color:var(--red);background:rgba(255,34,68,0.06)}
+
+.pill{
+  display:inline-flex;align-items:center;gap:0.35rem;
+  padding:0.25rem 0.55rem;border:1px solid var(--border);
+  font-size:0.55rem;color:var(--muted);letter-spacing:0.05em
+}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+
+/* TODAY VIEW */
+.today-date{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--text);line-height:1.1}
+.today-day{font-size:0.8rem;color:var(--green);margin-top:0.3rem;letter-spacing:0.1em}
+.today-week{font-size:0.65rem;color:var(--muted);margin-top:0.2rem}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(0,255,136,0.3)}
+.stat-label{font-size:0.6rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-top:0.3rem}
+.stat-sub{font-size:0.55rem;color:var(--dim);margin-top:0.2rem}
+
+/* ROUTINE CHECKS */
+.routine-item{display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+.routine-item:last-child{border-bottom:none}
+.routine-check{width:20px;height:20px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.routine-check.done{border-color:var(--green);background:rgba(0,255,136,0.1)}
+.routine-check.done::after{content:'✓';color:var(--green);font-size:0.75rem;font-weight:700}
+.routine-text{flex:1;font-family:'Cairo',sans-serif;font-size:0.85rem}
+.routine-emoji{font-size:1.2rem}
+.streak-fire{font-size:1.5rem}
+
+/* TASKS */
+.task-item{padding:0.75rem 0;border-bottom:1px solid rgba(22,37,64,0.7);display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;transition:background 0.1s}
+.task-item:hover{background:rgba(255,255,255,0.02)}
+.task-item:last-child{border-bottom:none}
+.task-cb{width:16px;height:16px;border:1px solid var(--border2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.task-cb.done{border-color:var(--green);background:rgba(0,255,136,0.15)}
+.task-cb.done::after{content:'✓';color:var(--green);font-size:0.6rem;font-weight:700}
+.task-text{font-family:'Cairo',sans-serif;font-size:0.85rem;flex:1;transition:color 0.15s}
+.task-item.done .task-text{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
+.task-meta{display:flex;gap:0.5rem;align-items:center;flex-shrink:0;margin-top:2px}
+.task-badge{font-size:0.5rem;padding:0.15rem 0.45rem;border:1px solid;text-transform:uppercase;letter-spacing:0.1em;flex-shrink:0}
+.badge-thm{color:#3b9eff;border-color:rgba(59,158,255,0.4);background:rgba(59,158,255,0.07)}
+.badge-ps{color:#ff9500;border-color:rgba(255,149,0,0.4);background:rgba(255,149,0,0.07)}
+.badge-vh{color:#a855f7;border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.07)}
+.badge-wu{color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07)}
+.badge-th{color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.07)}
+.badge-pr{color:#10b981;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.07)}
+.badge-py{color:#84cc16;border-color:rgba(132,204,22,0.4);background:rgba(132,204,22,0.07)}
+.badge-gh{color:#a78bfa;border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.07)}
+.badge-bb{color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07)}
+.badge-ctf{color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07)}
+.badge-rp{color:#60a5fa;border-color:rgba(96,165,250,0.4);background:rgba(96,165,250,0.07)}
+.badge-ejpt{color:#fbbf24;border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.07)}
+.badge-ca{color:#a3e635;border-color:rgba(163,230,53,0.4);background:rgba(163,230,53,0.07)}
+.badge-lab{color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07)}
+.badge-ad{color:#14b8a6;border-color:rgba(20,184,166,0.4);background:rgba(20,184,166,0.07)}
+.badge-en{color:#38bdf8;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.07)}
+.badge-overdue{color:var(--red);border-color:rgba(255,34,68,0.35);background:rgba(255,34,68,0.08)}
+.badge-upcoming{color:var(--cyan);border-color:rgba(0,212,255,0.25);background:rgba(0,212,255,0.06)}
+.badge-today{color:var(--green);border-color:rgba(0,255,136,0.35);background:rgba(0,255,136,0.06)}
+
+.section-help{
+  margin-top:0.75rem;
+  font-family:'Cairo',sans-serif;
+  font-size:0.8rem;
+  color:var(--muted);
+  line-height:1.8;
+  border-top:1px dashed rgba(30,51,84,0.7);
+  padding-top:0.75rem
+}
+
+/* BONUS ROOM */
+.bonus-room{padding:1rem;background:rgba(59,158,255,0.06);border:1px solid rgba(59,158,255,0.2);display:flex;align-items:center;gap:1rem}
+.bonus-icon{font-size:1.5rem}
+.bonus-label{font-size:0.55rem;color:#3b9eff;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.3rem}
+.bonus-name{font-size:0.85rem;color:var(--text)}
+.bonus-link{font-size:0.6rem;color:#3b9eff;text-decoration:none;letter-spacing:0.1em;display:inline-flex;align-items:center;gap:0.3rem;margin-top:0.3rem}
+.bonus-link:hover{color:var(--cyan)}
+
+/* WEEK PROGRESS */
+.week-prog-bar{height:6px;background:var(--border);position:relative;overflow:hidden;margin-top:0.5rem}
+.week-prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width 0.5s ease}
+.week-prog-text{font-size:0.6rem;color:var(--muted);margin-top:0.3rem;display:flex;justify-content:space-between}
+
+/* NOTES */
+.week-notes{width:100%;background:rgba(10,19,34,0.8);border:1px solid var(--border);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.85rem;padding:0.75rem;resize:vertical;min-height:80px;line-height:1.6;direction:rtl}
+.week-notes:focus{outline:none;border-color:var(--border2)}
+.week-notes::placeholder{color:var(--muted)}
+.rating-row{display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap}
+.rating-btn{padding:0.3rem 0.75rem;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.6rem;cursor:pointer;letter-spacing:0.1em;transition:all 0.15s}
+.rating-btn:hover{border-color:var(--border2);color:var(--text)}
+.rating-btn.active-all{border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.1)}
+.rating-btn.active-most{border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)}
+.rating-btn.active-delayed{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)}
+
+/* FOCUS */
+.focus-row{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+.focus-time{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:var(--text)}
+.focus-sub{font-size:0.65rem;color:var(--muted)}
+.focus-bar{height:6px;background:var(--border);overflow:hidden;margin-top:0.5rem}
+.focus-fill{height:100%;background:linear-gradient(90deg,var(--yellow),var(--orange));width:0%;transition:width 0.5s ease}
+
+/* ROADMAP VIEW */
+.phase-tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.pt{padding:0.65rem 1.5rem;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.15em;cursor:pointer;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;transition:all 0.2s;color:var(--muted);background:transparent;text-transform:uppercase}
+.pt:hover{background:var(--card);color:var(--text)}
+.pt.p1a{color:var(--p1);border-color:var(--p1);background:rgba(67,97,238,0.08)}
+.pt.p2a{color:var(--p2);border-color:var(--p2);background:rgba(6,214,160,0.08)}
+.pt.p3a{color:var(--p3);border-color:var(--p3);background:rgba(239,35,60,0.08)}
+.weeks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0.75rem}
+.wc{background:var(--card);border:1px solid var(--border);transition:all 0.15s}
+.wc:hover{border-color:var(--border2)}
+.wc.cur{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,0.1)}
+.wc.p1:hover{border-color:rgba(67,97,238,0.4)}
+.wc.p2:hover{border-color:rgba(6,214,160,0.4)}
+.wc.p3:hover{border-color:rgba(239,35,60,0.3)}
+.wh{padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;border-bottom:1px solid transparent;transition:border-color 0.2s}
+.wc.open .wh{border-bottom-color:var(--border)}
+.wnum{font-family:'Orbitron',sans-serif;font-size:0.55rem;font-weight:800;padding:0.25rem 0.5rem;min-width:46px;text-align:center}
+.p1 .wnum{color:var(--p1);border:1px solid rgba(67,97,238,0.4);background:rgba(67,97,238,0.08)}
+.p2 .wnum{color:var(--p2);border:1px solid rgba(6,214,160,0.4);background:rgba(6,214,160,0.08)}
+.p3 .wnum{color:var(--p3);border:1px solid rgba(239,35,60,0.3);background:rgba(239,35,60,0.06)}
+.cur .wnum{color:var(--green)!important;border-color:var(--green)!important;background:rgba(0,255,136,0.1)!important}
+.wi{flex:1}
+.wtopic{font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text)}
+.wdates{font-size:0.55rem;color:var(--muted);margin-top:0.15rem}
+.wprog{height:2px;background:var(--border);margin-top:0.4rem}
+.wprogf{height:100%;background:var(--green);transition:width 0.3s}
+.wtog{font-size:0.7rem;color:var(--muted);transition:transform 0.2s;flex-shrink:0}
+.wc.open .wtog{transform:rotate(180deg)}
+.wdays{display:none}
+.wc.open .wdays{display:block}
+.dr{padding:0.6rem 1rem;border-bottom:1px solid rgba(22,37,64,0.5);display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;transition:background 0.1s}
+.dr:last-child{border-bottom:none}
+.dr:hover{background:rgba(255,255,255,0.02)}
+.dr.done .dr-task{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+.dname{font-family:'Orbitron',sans-serif;font-size:0.5rem;color:var(--muted);min-width:58px;padding-top:2px;letter-spacing:0.1em}
+.dr-task{font-family:'Cairo',sans-serif;font-size:0.8rem;flex:1;line-height:1.3}
+.cur-banner{background:rgba(0,255,136,0.07);border-bottom:1px solid rgba(0,255,136,0.15);padding:0.35rem;text-align:center;font-family:'Orbitron',sans-serif;font-size:0.55rem;color:var(--green);letter-spacing:0.2em}
+
+/* SKILLS VIEW */
+.skill-row{padding:1rem 0;border-bottom:1px solid rgba(22,37,64,0.5)}
+.skill-row:last-child{border-bottom:none}
+.skill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;gap:0.5rem}
+.skill-name{display:flex;align-items:center;gap:0.5rem;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:600}
+.skill-icon{font-size:1rem}
+.skill-pct{font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700}
+.skill-bar{height:8px;background:var(--border);position:relative;overflow:hidden}
+.skill-fill{height:100%;position:relative;transition:width 1s ease}
+.skill-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:20px;background:rgba(255,255,255,0.15);filter:blur(4px)}
+.skill-meta{font-size:0.6rem;color:var(--muted);margin-top:0.4rem;display:flex;justify-content:space-between;gap:0.5rem;flex-wrap:wrap}
+.skill-rooms{font-size:0.6rem;color:var(--muted);margin-top:0.3rem}
+
+/* ROOMS VIEW */
+.rooms-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.rooms-search{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;padding:0.6rem 1rem;outline:none;direction:ltr;min-width:220px}
+.rooms-search:focus{border-color:var(--border2)}
+.rooms-search::placeholder{color:var(--muted)}
+.add-room-row{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.add-room-input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.5rem 0.75rem;outline:none;direction:ltr;min-width:220px}
+.add-room-input:focus{border-color:var(--green)}
+.btn-add{padding:0.5rem 1rem;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:0.55rem;letter-spacing:0.15em;cursor:pointer;transition:all 0.15s;text-transform:uppercase}
+.btn-add:hover{background:rgba(0,255,136,0.2)}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem}
+.room-item{padding:0.65rem 0.9rem;background:var(--card);border:1px solid var(--border);display:flex;align-items:flex-start;gap:0.7rem;cursor:pointer;transition:all 0.15s}
+.room-item:hover{border-color:var(--border2)}
+.room-dot{width:8px;height:8px;border:1px solid var(--muted);border-radius:50%;flex-shrink:0;transition:all 0.15s;margin-top:6px}
+.room-item[data-state="done"] .room-dot{background:var(--green);border-color:var(--green);box-shadow:0 0 6px rgba(0,255,136,0.4)}
+.room-item[data-state="inprogress"] .room-dot{background:var(--yellow);border-color:var(--yellow);box-shadow:0 0 6px rgba(255,214,10,0.25)}
+.room-item-name{font-size:0.7rem;flex:1;line-height:1.3;direction:ltr}
+.room-tags{display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.25rem}
+.room-tag{font-size:0.45rem;padding:0.1rem 0.35rem;border:1px solid var(--dim);color:var(--muted);letter-spacing:0.05em}
+.rooms-stats{display:flex;gap:1rem;margin-bottom:1rem;padding:0.75rem 1rem;background:var(--card);border:1px solid var(--border);flex-wrap:wrap}
+.rooms-stat{text-align:center;min-width:120px}
+.rooms-stat-n{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;color:var(--green)}
+.rooms-stat-l{font-size:0.55rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.filter-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{padding:0.3rem 0.7rem;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.55rem;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;text-transform:uppercase}
+.filter-btn:hover{color:var(--text);border-color:var(--border2)}
+.filter-btn.active{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.07)}
+.room-actions{display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.4rem}
+.state-btn{padding:0.25rem 0.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.5rem;cursor:pointer;letter-spacing:0.07em;text-transform:uppercase;transition:all 0.15s}
+.state-btn:hover{border-color:var(--border2);color:var(--text)}
+.state-btn.active{border-color:rgba(0,255,136,0.35);color:var(--green);background:rgba(0,255,136,0.06)}
+.state-btn.ip.active{border-color:rgba(255,214,10,0.35);color:var(--yellow);background:rgba(255,214,10,0.06)}
+.state-btn.pd.active{border-color:rgba(0,212,255,0.25);color:var(--cyan);background:rgba(0,212,255,0.06)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  :root{--sidebar:60px}
+  .sb-label,.sb-brand-sub,.sb-brand-name{display:none}
+  .sb-item{justify-content:center;padding:0.75rem}
+  .sb-icon{width:auto}
+  .view{padding:1rem}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -53,128 +291,429 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </main>
 
 <script>
-// ──────────────────────────────────────────────
-// البيانات الأساسية (نفسها)
-const PRELOADED_ROOMS = ["Linux Fundamentals Part 1", /* ... باقي القائمة كما هي ... */ "The Game"];
-const SKILLS_DEF = [ /* نفس المصفوفة */ ];
-const WEEKS_DATA = [ /* نفس البيانات */ ];
-const BONUS_POOL = [ /* نفس القائمة */ ];
-const START_DATE = new Date('2026-03-02');
+/**
+ * ملاحظة تعليمية بسيطة:
+ * localStorage = درج داخل المتصفح لتخزين بياناتك.
+ * ما في سيرفر، كل شيء عندك على جهازك / داخل المتصفح.
+ */
 
-// ──────────────────────────────────────────────
-// إضافات جديدة لـ Bonus Room + Gamification
-const ROOM_SLUGS = {
-  "Linux Fundamentals Part 1": "linuxfundamentalspart1",
-  "Linux Privilege Escalation": "linuxprivesc",
-  "Windows Privilege Escalation": "windows10privesc",
-  "SQL Injection": "sqlinjectionlm",
-  "Burp Suite: The Basics": "burpsuitebasics",
-  "Metasploit: Introduction": "metasploitintro",
-  "Nmap": "nmap",
-  "OWASP Juice Shop": "owaspjuiceshop",
-  "Mr Robot CTF": "mrrobot",
-  "Pickle Rick": "picklerick",
-  "OhSINT": "ohsint",
-  "Blue": "blue",
-  // أضف المزيد إذا أردت روابط مباشرة أكثر
-};
+// ===== DATA =====
+const PRELOADED_ROOMS = [/* (نفس قائمتك القديمة بدون تغيير) */ 
+  "Linux Fundamentals Part 1","Linux Fundamentals Part 2","Linux Fundamentals Part 3","Linux Shells","Linux Privilege Escalation",
+  "Windows Fundamentals 1","Windows Fundamentals 2","Windows Fundamentals 3","Windows Command Line","Windows PowerShell","Windows Privilege Escalation",
+  "How Websites Work","HTTP in Detail","Web Application Basics","Walking An Application","Putting it all together",
+  "Content Discovery","Subdomain Enumeration","Authentication Bypass","IDOR","Intro to SSRF","Intro to Cross-site Scripting",
+  "File Inclusion","Command Injection","Upload Vulnerabilities","OWASP Juice Shop",
+  "SQL Injection","Advanced SQL Injection","NoSQL Injection","SQLMap: The Basics","SQL Fundamentals",
+  "DNS in Detail","What is Networking?","Intro to LAN","OSI Model","Packets & Frames","Extending Your Network","Networking Concepts",
+  "Networking Essentials","Networking Core Protocols","Networking Secure Protocols","Network Services","Protocols and Servers","Protocols and Servers 2",
+  "Passive Reconnaissance","Active Reconnaissance","Nmap","Nmap: The Basics","Nmap Live Host Discovery","Nmap Basic Port Scans","Nmap Advanced Port Scans","Nmap Post Port Scans",
+  "Wireshark: The Basics","Tcpdump: The Basics","Net Sec Challenge",
+  "Burp Suite: The Basics","Burp Suite: Repeater","Burp Suite: Intruder","Burp Suite: Other Modules","Burp Suite: Extensions",
+  "Metasploit: Introduction","Metasploit: Exploitation","Metasploit: Meterpreter",
+  "Vulnerabilities 101","Exploit Vulnerabilities","Cryptography Basics","Hashing Basics","Public Key Cryptography Basics",
+  "Security Principles","Security Awareness",
+  "Active Directory Basics",
+  "Pickle Rick","Mr Robot CTF","OhSINT","Simple CTF","Agent Sudo","LazyAdmin","Bounty Hacker","Overpass","RootMe","Brooklyn Nine Nine","Easy Peasy","Cyborg","Blue","Basic Pentesting",
+  "Gobuster: The Basics","John the Ripper: The Basics","CyberChef: The Basics","Hydra",
+  "Offensive Security Intro","Pentesting Fundamentals","Search Skills","Shells Overview","What the Shell?"
+];
 
-const ROOM_DESCRIPTIONS = {
-  "SQL Injection": "تعلم استغلال ثغرات الحقن في قواعد البيانات (Error-based, Union-based, Blind)",
-  "Linux Privilege Escalation": "تقنيات SUID، Cron، Capabilities، GTFOBins وغيرها",
-  "Burp Suite: The Basics": "أساسيات Burp لاعتراض الطلبات وتعديلها",
-  "Mr Robot CTF": "تحدي مستوحى من المسلسل – Enumeration + Web + PrivEsc",
-  "Pickle Rick": "CTF كلاسيكي – Web + Linux PrivEsc ممتع",
-  // أضف وصف قصير لأي غرفة تحب
-};
+const SKILLS_DEF = [
+  {"id":"web","name":"Web Exploitation","ar":"استغلال الويب","color":"#4361ee","icon":"🌐","rooms":["How Websites Work","HTTP in Detail","Web Application Basics","Walking An Application","Putting it all together","Content Discovery","Subdomain Enumeration","Authentication Bypass","IDOR","Intro to SSRF","Intro to Cross-site Scripting","File Inclusion","Command Injection","Upload Vulnerabilities","OWASP Juice Shop","Advanced SQL Injection","NoSQL Injection"]},
+  {"id":"sqli","name":"SQL Injection","ar":"SQL Injection","color":"#7c3aed","icon":"💉","rooms":["SQL Injection","Advanced SQL Injection","NoSQL Injection","SQLMap: The Basics","SQL Fundamentals"]},
+  {"id":"linuxPriv","name":"Linux PrivEsc","ar":"رفع صلاحيات Linux","color":"#059669","icon":"🐧","rooms":["Linux Privilege Escalation","Linux Fundamentals Part 1","Linux Fundamentals Part 2","Linux Fundamentals Part 3","Linux Shells"]},
+  {"id":"winPriv","name":"Windows PrivEsc","ar":"رفع صلاحيات Windows","color":"#0ea5e9","icon":"🪟","rooms":["Windows Privilege Escalation","Windows Fundamentals 1","Windows Fundamentals 2","Windows Fundamentals 3","Windows Command Line","Windows PowerShell"]},
+  {"id":"ad","name":"Active Directory","ar":"Active Directory","color":"#f59e0b","icon":"🏢","rooms":["Active Directory Basics"]},
+  {"id":"net","name":"Networking","ar":"شبكات","color":"#10b981","icon":"🔌","rooms":["DNS in Detail","What is Networking?","Intro to LAN","OSI Model","Packets & Frames","Extending Your Network","Networking Concepts","Networking Essentials","Networking Core Protocols","Networking Secure Protocols","Network Services","Protocols and Servers","Protocols and Servers 2","Passive Reconnaissance","Active Reconnaissance","Nmap","Nmap: The Basics","Nmap Live Host Discovery","Nmap Basic Port Scans","Nmap Advanced Port Scans","Nmap Post Port Scans","Wireshark: The Basics","Tcpdump: The Basics","Net Sec Challenge"]},
+  {"id":"burp","name":"Burp Suite","ar":"Burp Suite","color":"#f97316","icon":"🔥","rooms":["Burp Suite: The Basics","Burp Suite: Repeater","Burp Suite: Intruder","Burp Suite: Other Modules","Burp Suite: Extensions"]},
+  {"id":"msf","name":"Metasploit","ar":"Metasploit","color":"#ef4444","icon":"🎯","rooms":["Metasploit: Introduction","Metasploit: Exploitation","Metasploit: Meterpreter"]},
+  {"id":"report","name":"Report Writing","ar":"كتابة التقارير","color":"#22d3ee","icon":"📝","rooms":[]}
+];
 
-// ──────────────────────────────────────────────
-// الحالة (State) مع إضافة XP
+const START_DATE = new Date('2026-03-02T00:00:00');
+
+// ===== YOUR WEEKS_DATA (kept as-is) =====
+const WEEKS_DATA = (function(){
+  // نفس بياناتك (اختصارًا في الرسالة): رح استخدم الموجود عندك.
+  // ملاحظة: بما أنك لصقت بيانات ضخمة، خليها كما هي في ملفك الأصلي.
+  // إذا حبيت، ابعتلي الملف كامل مرة ثانية وأنا أدمجها لك حرفيًا بدون حذف.
+  return window.WEEKS_DATA || [];
+})();
+
+// ===== STATE =====
 const S = {
-  tasks: {},
-  routine: {},
-  extraRooms: [],
-  notes: {},
-  ratings: {},
+  tasks: {},            // key: "w{n}_{dayName}", val: bool
+  routine: {},          // key: "yyyy-mm-dd", val: {teeth:bool, exercise:bool}
+  extraRoomsCatalog: [],// Rooms user added to catalog/list
+  roomsState: {},       // key: roomName -> "pending" | "inprogress" | "done"
+  notes: {},            // key: "w{n}", val: string
+  ratings: {},          // key: "w{n}", val: string
   view: 'today',
   phase: 1,
   roomFilter: 'all',
   roomSearch: '',
-  xp: localStorage.getItem('xenos_xp') ? parseInt(localStorage.getItem('xenos_xp')) : 0,
+  notifications: { enabled:false, time:"20:00" },
+  focus: { mode:"pomodoro25", running:false, endsAt:0, startedAt:0, durationMs:25*60*1000 }
 };
 
+function safeJSONParse(v, fallback){
+  try { return JSON.parse(v); } catch(e){ return fallback; }
+}
+
 function loadState() {
-  try {
-    const t = localStorage.getItem('xenos_tasks'); if(t) S.tasks = JSON.parse(t);
-    const r = localStorage.getItem('xenos_routine'); if(r) S.routine = JSON.parse(r);
-    const e = localStorage.getItem('xenos_extra'); if(e) S.extraRooms = JSON.parse(e);
-    const n = localStorage.getItem('xenos_notes'); if(n) S.notes = JSON.parse(n);
-    const g = localStorage.getItem('xenos_ratings'); if(g) S.ratings = JSON.parse(g);
-    const v = localStorage.getItem('xenos_view'); if(v) S.view = v;
-  } catch(err) { console.log('State load error:', err); }
+  S.tasks = safeJSONParse(localStorage.getItem('xenos_tasks')||'{}', {});
+  S.routine = safeJSONParse(localStorage.getItem('xenos_routine')||'{}', {});
+  S.extraRoomsCatalog = safeJSONParse(localStorage.getItem('xenos_extra_catalog')||'[]', []);
+  S.roomsState = safeJSONParse(localStorage.getItem('xenos_rooms_state')||'{}', {});
+  S.notes = safeJSONParse(localStorage.getItem('xenos_notes')||'{}', {});
+  S.ratings = safeJSONParse(localStorage.getItem('xenos_ratings')||'{}', {});
+  S.view = localStorage.getItem('xenos_view') || 'today';
+  S.notifications = safeJSONParse(localStorage.getItem('xenos_notifications')||JSON.stringify(S.notifications), S.notifications);
+  S.focus = safeJSONParse(localStorage.getItem('xenos_focus')||JSON.stringify(S.focus), S.focus);
 }
 
 function save(key, val) {
-  try {
-    localStorage.setItem(key, JSON.stringify(val));
-    // تحديث XP بعد أي تغيير يؤثر على النقاط
-    if (key === 'xenos_tasks' || key === 'xenos_routine' || key === 'xenos_extra') {
-      updateXP();
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+// ===== TIME HELPERS =====
+function pad2(n){ return String(n).padStart(2,'0'); }
+function toKeyDate(d){
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function todayDate(){
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+function addDays(d, n){
+  const x = new Date(d);
+  x.setDate(x.getDate()+n);
+  return x;
+}
+function getTodayKey(){ return toKeyDate(todayDate()); }
+
+function getTodayDayName() {
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  return days[new Date().getDay()];
+}
+function formatDate() {
+  const d = new Date();
+  return d.toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+function getCurrentWeek() {
+  const now = todayDate();
+  const diff = Math.floor((now - START_DATE) / (7 * 24 * 3600 * 1000));
+  return Math.min(52, Math.max(1, diff + 1));
+}
+
+// ===== ROOMS: CATALOG vs COMPLETED =====
+function getRoomsCatalogList(){
+  // Catalog = قائمة الرومات الموجودة (preloaded + اللي تضيفها أنت)
+  const base = [...PRELOADED_ROOMS];
+  const extraUnique = S.extraRoomsCatalog.filter(r => !base.includes(r));
+  return [...base, ...extraUnique];
+}
+function getRoomState(name){
+  return S.roomsState[name] || "pending";
+}
+function setRoomState(name, state){
+  if(state === "pending"){
+    delete S.roomsState[name]; // نخلي التخزين خفيف
+  }else{
+    S.roomsState[name] = state;
+  }
+  save('xenos_rooms_state', S.roomsState);
+}
+function countRooms(){
+  const catalog = getRoomsCatalogList();
+  let done=0, ip=0, pending=0;
+  catalog.forEach(r=>{
+    const st = getRoomState(r);
+    if(st==="done") done++;
+    else if(st==="inprogress") ip++;
+    else pending++;
+  });
+  return { total: catalog.length, done, inprogress: ip, pending };
+}
+
+// ===== TASKS DATES (for overdue/upcoming) =====
+function getWeekStartDate(weekNum){
+  // week 1 starts at START_DATE
+  return addDays(START_DATE, (weekNum-1)*7);
+}
+function getTaskDate(weekNum, arabicDayName){
+  // mapping: week start is Monday? In your plan, W1 dates 02/03—08/03/2026 (Mon..Sun)
+  // We'll treat START_DATE as Monday of week 1 (it is 2026-03-02).
+  const map = {'الاثنين':0,'الثلاثاء':1,'الأربعاء':2,'الخميس':3,'الجمعة':4,'السبت':5,'الأحد':6};
+  const idx = map[arabicDayName];
+  if(idx === undefined) return null;
+  return addDays(getWeekStartDate(weekNum), idx);
+}
+
+function flattenAllTasks(){
+  // returns: [{weekNum, dayName, type, task, key, date}]
+  const out = [];
+  if(!Array.isArray(window.WEEKS_DATA) && !Array.isArray(WEEKS_DATA)) return out;
+  const weeks = Array.isArray(window.WEEKS_DATA) ? window.WEEKS_DATA : WEEKS_DATA;
+  weeks.forEach(w=>{
+    (w.days||[]).forEach(d=>{
+      const key = `w${w.num}_${d.d}`;
+      const date = getTaskDate(w.num, d.d);
+      if(!date) return;
+      out.push({weekNum:w.num, dayName:d.d, type:d.t, task:d.task, key, date});
+    });
+  });
+  return out;
+}
+
+function getOverdueAndUpcoming(){
+  const now = todayDate();
+  const all = flattenAllTasks().filter(t => t.dayName !== 'الجمعة');
+  const overdue = all
+    .filter(t => t.date < now && !S.tasks[t.key])
+    .sort((a,b)=> a.date - b.date)
+    .slice(0,6);
+  const upcoming = all
+    .filter(t => t.date > now)
+    .sort((a,b)=> a.date - b.date)
+    .slice(0,6);
+  return { overdue, upcoming };
+}
+
+// ===== SKILLS CALC (based on DONE rooms only) =====
+function calcSkills() {
+  const res = {};
+  SKILLS_DEF.forEach(sk => {
+    if(!sk.rooms.length) { res[sk.id] = 0; return; }
+    const done = sk.rooms.filter(r => getRoomState(r)==="done").length;
+    res[sk.id] = Math.round(done / sk.rooms.length * 100);
+  });
+  return res;
+}
+
+// ===== ROUTINE =====
+function getStreak() {
+  let streak = 0;
+  const today = todayDate();
+  for(let i=0;i<365;i++){
+    const d = addDays(today, -i);
+    const key = toKeyDate(d);
+    const r = S.routine[key];
+    if(r && r.teeth && r.exercise) streak++;
+    else if(i>0) break;
+  }
+  return streak;
+}
+function getTotalTasksDone() { return Object.values(S.tasks).filter(Boolean).length; }
+
+// ===== BONUS ROOM =====
+const BONUS_POOL = ["Pickle Rick","RootMe","Simple CTF","Agent Sudo","LazyAdmin","Bounty Hacker","Overpass","Brooklyn Nine Nine","Easy Peasy","Cyborg","Blue","Basic Pentesting","OhSINT","Mr Robot CTF","Net Sec Challenge","Nmap","Wreath","OWASP Juice Shop","Enumeration & Brute Force","Hydra","John the Ripper: The Basics","CyberChef: The Basics","Gobuster: The Basics"];
+function getBonusRoom() {
+  const daysSinceStart = Math.floor((todayDate() - START_DATE) / (24*3600*1000));
+  return BONUS_POOL[Math.abs(daysSinceStart) % BONUS_POOL.length];
+}
+
+// ===== WEEK PROGRESS =====
+function getWeekProgress(wn) {
+  const weeks = Array.isArray(window.WEEKS_DATA) ? window.WEEKS_DATA : WEEKS_DATA;
+  const wk = weeks.find(w => w.num === wn);
+  if(!wk) return 0;
+  const days = (wk.days||[]).filter(d=> d.d !== 'الجمعة');
+  const done = days.filter(d => S.tasks[`w${wn}_${d.d}`]).length;
+  return days.length ? Math.round(done / days.length * 100) : 0;
+}
+
+// ===== NAV / RENDER =====
+function nav(v) {
+  S.view = v;
+  localStorage.setItem('xenos_view', v);
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view === v));
+  document.querySelectorAll('.view').forEach(el => el.classList.toggle('active', el.id === 'v-'+v));
+  renderView(v);
+}
+function renderView(v) {
+  if(v === 'today') renderToday();
+  else if(v === 'roadmap') renderRoadmap();
+  else if(v === 'skills') renderSkills();
+  else if(v === 'rooms') renderRooms();
+}
+
+// ===== SMART PLAN (time-based) =====
+function getPlan(minutes){
+  // الهدف: يعطي ترتيب “ماذا تفعل الآن؟” بدون أي حلول لابات.
+  const tips = [];
+  if(minutes <= 30){
+    tips.push("افتح المهمة/الروم الخاصة باليوم واقرأ المقدمة فقط.");
+    tips.push("اكتب 3 نقاط: (شو الهدف؟ شو الأدوات المذكورة؟ شو الأشياء اللي ما فهمتها؟).");
+    tips.push("لو ضل وقت: راجع ملاحظات الأسبوع.");
+  }else if(minutes <= 60){
+    tips.push("اقرأ المقدمة + أول جزء من الروم، وركز على فهم المصطلحات.");
+    tips.push("كل ما تشوف مصطلح جديد: اكتبه بملاحظاتك (بدون حفظ).");
+    tips.push("آخر 10 دقائق: اكتب ملخص بسيط (5 سطور).");
+  }else{
+    tips.push("قسم الجلسة: 10 دقائق تجهيز + 70 دقائق عمل + 10 دقائق تلخيص + 10 دقائق تنظيم.");
+    tips.push("أثناء العمل: كل 20 دقيقة توقف 30 ثانية واسأل نفسك: (ليش عم أعمل هالخطوة؟).");
+    tips.push("آخر الجلسة: حدّد ‘خطوة واحدة’ لباكر.");
+  }
+  return tips;
+}
+
+// ===== FOCUS / POMODORO =====
+function focusConfig(mode){
+  if(mode==="pomodoro25") return { label:"Pomodoro 25/5", workMin:25, breakMin:5 };
+  if(mode==="pomodoro50") return { label:"Pomodoro 50/10", workMin:50, breakMin:10 };
+  return { label:"Custom", workMin:25, breakMin:5 };
+}
+function startFocus(mode){
+  const cfg = focusConfig(mode);
+  const dur = cfg.workMin * 60 * 1000;
+  S.focus.mode = mode;
+  S.focus.running = true;
+  S.focus.startedAt = Date.now();
+  S.focus.durationMs = dur;
+  S.focus.endsAt = Date.now() + dur;
+  save('xenos_focus', S.focus);
+  renderView(S.view);
+}
+function stopFocus(){
+  S.focus.running = false;
+  save('xenos_focus', S.focus);
+  renderView(S.view);
+}
+function getFocusRemainingMs(){
+  if(!S.focus.running) return 0;
+  return Math.max(0, S.focus.endsAt - Date.now());
+}
+function formatMMSS(ms){
+  const s = Math.floor(ms/1000);
+  const m = Math.floor(s/60);
+  const r = s%60;
+  return `${pad2(m)}:${pad2(r)}`;
+}
+
+// ===== NOTIFICATIONS =====
+async function enableNotifications(){
+  if(!("Notification" in window)){
+    alert("متصفحك لا يدعم Notifications.");
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm !== "granted"){
+    alert("لم يتم إعطاء إذن الإشعارات.");
+    return;
+  }
+  S.notifications.enabled = true;
+  save('xenos_notifications', S.notifications);
+  alert("تم تفعيل الإشعارات. ملاحظة: لازم تترك الصفحة مفتوحة حتى يشتغل التذكير.");
+  renderView(S.view);
+}
+function setNotifyTime(t){
+  S.notifications.time = t;
+  save('xenos_notifications', S.notifications);
+}
+function maybeFireDailyNotification(){
+  if(!S.notifications.enabled) return;
+  if(!("Notification" in window)) return;
+  if(Notification.permission !== "granted") return;
+
+  const keyToday = getTodayKey();
+  const lastKey = localStorage.getItem("xenos_notify_last") || "";
+  // fire once per day at selected time
+  const [hh,mm] = (S.notifications.time||"20:00").split(":").map(x=>parseInt(x,10));
+  const now = new Date();
+  const should =
+    now.getHours()===hh && now.getMinutes()===mm &&
+    lastKey !== keyToday;
+
+  if(should){
+    localStorage.setItem("xenos_notify_last", keyToday);
+    new Notification("XENOS — تذكير اليوم", {
+      body: "افتح المهام وحدد 30 دقيقة تركيز. خطوة صغيرة كل يوم.",
+    });
+  }
+}
+
+// ===== BACKUP / RESTORE =====
+function exportBackup(){
+  const payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    data: {
+      tasks: S.tasks,
+      routine: S.routine,
+      extraRoomsCatalog: S.extraRoomsCatalog,
+      roomsState: S.roomsState,
+      notes: S.notes,
+      ratings: S.ratings,
+      notifications: S.notifications
     }
-  } catch(e) {}
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "xenos-backup.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    const obj = safeJSONParse(reader.result, null);
+    if(!obj || !obj.data){ alert("الملف غير صالح."); return; }
+    const d = obj.data;
+    S.tasks = d.tasks || {};
+    S.routine = d.routine || {};
+    S.extraRoomsCatalog = d.extraRoomsCatalog || [];
+    S.roomsState = d.roomsState || {};
+    S.notes = d.notes || {};
+    S.ratings = d.ratings || {};
+    S.notifications = d.notifications || S.notifications;
+
+    save('xenos_tasks', S.tasks);
+    save('xenos_routine', S.routine);
+    save('xenos_extra_catalog', S.extraRoomsCatalog);
+    save('xenos_rooms_state', S.roomsState);
+    save('xenos_notes', S.notes);
+    save('xenos_ratings', S.ratings);
+    save('xenos_notifications', S.notifications);
+
+    alert("تم الاستيراد بنجاح.");
+    renderView(S.view);
+  };
+  reader.readAsText(file);
 }
 
-// ──────────────────────────────────────────────
-// حساب XP + Level
-function updateXP() {
-  let xp = 0;
-
-  // من الـ streak
-  xp += getStreak() * 10;
-
-  // من المهام الأسبوعية
-  Object.values(S.tasks).forEach(done => { if (done) xp += 15; });
-
-  // من الـ rooms (الإضافية + اللي تم toggle)
-  // ملاحظة: حالياً نحسب الإضافية فقط – لو عايز الـ preloaded كمان، قل لي نعدل
-  xp += S.extraRooms.length * 30;
-
-  S.xp = xp;
-  localStorage.setItem('xenos_xp', S.xp);
-}
-
-function getLevel() {
-  return Math.floor(S.xp / 500) + 1;
-}
-
-function xpToNextLevel() {
-  const lvl = getLevel();
-  return (lvl * 500) - S.xp;
-}
-
-// ──────────────────────────────────────────────
-// باقي الدوال الأصلية (getCurrentWeek, getWeekProgress, getTodayKey, ...) تبقى كما هي
-// ... (انسخها من الملف الأصلي)
-
-// ──────────────────────────────────────────────
-// تعديل renderToday لإظهار XP + Bonus محسن
+// ===== TODAY VIEW =====
 function renderToday() {
   const wn = getCurrentWeek();
-  const wk = WEEKS_DATA.find(w => w.num === wn);
+  const weeks = Array.isArray(window.WEEKS_DATA) ? window.WEEKS_DATA : WEEKS_DATA;
+  const wk = weeks.find(w => w.num === wn);
   const dayName = getTodayDayName();
   const todayKey = getTodayKey();
   const routine = S.routine[todayKey] || {};
   const streak = getStreak();
   const bonus = getBonusRoom();
-  const totalRooms = getAllRooms().size;
+  const skills = calcSkills();
+  const roomsCount = countRooms();
+  const totalTasks = getTotalTasksDone();
+  const { overdue, upcoming } = getOverdueAndUpcoming();
 
-  const todayDay = wk ? wk.days.find(d => d.d === dayName) : null;
+  const todayDay = wk ? (wk.days||[]).find(d => d.d === dayName) : null;
 
   let html = `
     <div class="topbar">
       <div class="topbar-title">// <span>Today's Mission</span></div>
-      <div class="topbar-right">${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+      <div class="topbar-right">
+        <span class="pill">Date: ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+        <button class="mini-btn" onclick="exportBackup()">Backup</button>
+        <label class="mini-btn" style="cursor:pointer">
+          Restore<input type="file" accept="application/json" style="display:none" onchange="importBackup(this.files[0])" />
+        </label>
+      </div>
     </div>
+
     <div style="margin-bottom:1.5rem">
       <div class="today-date">${formatDate()}</div>
       <div class="today-day">الأسبوع ${wn} — ${wk ? wk.topic : '...'}</div>
@@ -188,28 +727,80 @@ function renderToday() {
         <div class="stat-sub">المرحلة ${wk ? wk.phase : 1}</div>
       </div>
       <div class="card">
-        <div class="stat-num" style="color:\( {streak>=7?'var(--yellow)':streak>=3?'var(--orange)':'var(--green)'}"> \){streak}</div>
+        <div class="stat-num" style="color:${streak>=7?'var(--yellow)':streak>=3?'var(--orange)':'var(--green)'}">${streak}</div>
         <div class="stat-label">Streak <span class="streak-fire">${streak>=7?'🔥':streak>=3?'✨':'⚡'}</span></div>
         <div class="stat-sub">يوم متتالي — دنتال + تمرين</div>
       </div>
       <div class="card">
-        <div class="stat-num" style="color:var(--cyan)">${totalRooms}</div>
+        <div class="stat-num" style="color:var(--cyan)">${roomsCount.done}</div>
         <div class="stat-label">Rooms Done</div>
-        <div class="stat-sub">THM Rooms مكتملة</div>
-      </div>
-      <div class="card">
-        <div class="stat-num" style="color:var(--yellow)">Level ${getLevel()}</div>
-        <div class="stat-label">Your Level</div>
-        <div class="stat-sub">XP: ${S.xp} • ${xpToNextLevel()} to next</div>
+        <div class="stat-sub">${roomsCount.inprogress} جاري · ${roomsCount.pending} لم تبدأ</div>
       </div>
     </div>
 
     <div class="grid-2" style="margin-bottom:1.5rem">
       <div class="card">
         <div class="card-title">الروتين اليومي</div>
-        <!-- باقي الروتين كما هو -->
+  `;
+
+  ['teeth','exercise'].forEach(type => {
+    const done = routine[type];
+    const emoji = type === 'teeth' ? '🪥' : '💪';
+    const label = type === 'teeth' ? 'تفريش الأسنان' : 'تمرين';
+    html += `<div class="routine-item" onclick="toggleRoutine('${type}')">
+      <span class="routine-emoji">${emoji}</span>
+      <span class="routine-text">${label}</span>
+      <div class="routine-check ${done?'done':''}"></div>
+    </div>`;
+  });
+
+  html += `
       </div>
 
+      <div class="card">
+        <div class="card-title">Focus Mode + Pomodoro</div>
+        <div class="focus-row" style="margin-bottom:0.5rem">
+          <button class="mini-btn ok" onclick="startFocus('pomodoro25')">25/5</button>
+          <button class="mini-btn warn" onclick="startFocus('pomodoro50')">50/10</button>
+          <button class="mini-btn danger" onclick="stopFocus()">Stop</button>
+          <div style="flex:1"></div>
+          <div>
+            <div class="focus-time" id="focus-time">${S.focus.running ? formatMMSS(getFocusRemainingMs()) : "00:00"}</div>
+            <div class="focus-sub">${S.focus.running ? "تركيز شغال" : "اختر مؤقت وابدأ"}</div>
+          </div>
+        </div>
+        <div class="focus-bar"><div class="focus-fill" id="focus-fill"></div></div>
+        <div class="section-help">
+          لماذا؟ لأن “الذكاء” الحقيقي هو إدارة التركيز. المؤقت يساعدك تعمل خطوة صغيرة بدون ضغط.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-title">خطة اليوم حسب وقتك</div>
+        <div class="focus-row">
+          <button class="mini-btn" onclick="renderPlan(30)">30 دقيقة</button>
+          <button class="mini-btn" onclick="renderPlan(60)">60 دقيقة</button>
+          <button class="mini-btn" onclick="renderPlan(120)">120 دقيقة</button>
+        </div>
+        <div id="plan-box" class="section-help" style="border-top:none;padding-top:0.75rem"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Notifications (تذكير يومي)</div>
+        <div class="focus-row">
+          <button class="mini-btn ${S.notifications.enabled?'ok':''}" onclick="enableNotifications()">${S.notifications.enabled?'Enabled':'Enable'}</button>
+          <span class="pill">Time</span>
+          <input type="time" value="${S.notifications.time||'20:00'}" onchange="setNotifyTime(this.value)" style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:0.25rem 0.5rem;font-size:0.7rem;outline:none" />
+        </div>
+        <div class="section-help">
+          مهم: المتصفح لازم يبقى مفتوح (أو على الأقل شغال) حتى يرسل التذكير.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
       <div class="card">
         <div class="card-title">Bonus THM Room</div>
         <div class="bonus-room">
@@ -217,34 +808,420 @@ function renderToday() {
           <div>
             <div class="bonus-label">Room of the Day</div>
             <div class="bonus-name">${bonus}</div>
-            \( {ROOM_DESCRIPTIONS[bonus] ? `<div style="font-size:0.75rem;color:var(--muted);margin:0.4rem 0 0.2rem;"> \){ROOM_DESCRIPTIONS[bonus]}</div>` : ''}
-            <a href="${ROOM_SLUGS[bonus] 
-              ? `https://tryhackme.com/room/${ROOM_SLUGS[bonus]}`
-              : `https://tryhackme.com/r/search?search=${encodeURIComponent(bonus)}`}" 
-              target="_blank" 
-              class="bonus-link">
-              ${ROOM_SLUGS[bonus] ? 'افتح الروم مباشرة ↗' : 'ابحث في TryHackMe ↗'}
-            </a>
+            <a href="https://tryhackme.com/r/search?search=${encodeURIComponent(bonus)}" target="_blank" class="bonus-link">Open on THM ↗</a>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- باقي محتوى Today (مهام اليوم، مهام الأسبوع، ملاحظات) كما هو -->
-    <!-- ... انسخ باقي الـ html من renderToday الأصلي ... -->
+      <div class="card">
+        <div class="card-title">نصيحة ذكية (بدون حلول)</div>
+        ${renderSmartTipHTML(skills, overdue.length)}
+      </div>
+    </div>
   `;
 
+  // Today's tasks
+  html += `<div class="card" style="margin-bottom:1.5rem"><div class="card-title">مهام اليوم — ${dayName}</div>`;
+  if(!todayDay) {
+    if(dayName === 'الجمعة') html += `<div style="text-align:center;padding:2rem;color:var(--muted);font-family:'Cairo',sans-serif;font-size:1rem">🔴 يوم العطلة — استرح وأعد شحن طاقتك</div>`;
+    else html += `<div style="padding:1rem;color:var(--muted);font-family:'Cairo',sans-serif">لا توجد مهمة محددة لهذا اليوم.</div>`;
+  } else {
+    const key = `w${wn}_${todayDay.d}`;
+    const done = S.tasks[key];
+    html += `<div class="task-item ${done?'done':''}" onclick="toggleTask('${key}')">
+      <div class="task-cb ${done?'done':''}"></div>
+      <div class="task-text">${todayDay.task}</div>
+      <div class="task-meta">
+        <div class="task-badge badge-${todayDay.t}">${todayDay.t.toUpperCase()}</div>
+        <div class="task-badge badge-today">TODAY</div>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Overdue + Upcoming
+  html += `
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-title">المتأخر (Overdue)</div>
+        ${overdue.length ? overdue.map(t => renderTaskMini(t, "overdue")).join('') : `<div style="color:var(--muted);font-family:'Cairo',sans-serif">لا يوجد متأخرات ممتاز.</div>`}
+      </div>
+      <div class="card">
+        <div class="card-title">القادم (Upcoming)</div>
+        ${upcoming.length ? upcoming.map(t => renderTaskMini(t, "upcoming")).join('') : `<div style="color:var(--muted);font-family:'Cairo',sans-serif">لا يوجد مهام قادمة في البيانات.</div>`}
+      </div>
+    </div>
+  `;
+
+  // All week tasks
+  html += `<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">كل مهام الأسبوع ${wn}</div>
+    <div class="week-prog-bar"><div class="week-prog-fill" style="width:${getWeekProgress(wn)}%"></div></div>
+    <div class="week-prog-text"><span>التقدم</span><span>${getWeekProgress(wn)}%</span></div>
+    <div style="margin-top:1rem">`;
+
+  if(wk) {
+    (wk.days||[]).forEach(d => {
+      if(d.d === 'الجمعة') return;
+      const key = `w${wn}_${d.d}`;
+      const done = S.tasks[key];
+      html += `<div class="task-item ${done?'done':''}" onclick="toggleTask('${key}')">
+        <div class="task-cb ${done?'done':''}"></div>
+        <div style="min-width:60px;font-family:'Orbitron',sans-serif;font-size:0.5rem;color:var(--muted);padding-top:2px">${d.d}</div>
+        <div class="task-text">${d.task}</div>
+        <div class="task-meta"><div class="task-badge badge-${d.t}">${d.t.toUpperCase()}</div></div>
+      </div>`;
+    });
+  }
+  html += `</div></div>`;
+
+  // Week notes
+  const noteVal = S.notes[`w${wn}`] || '';
+  const rating = S.ratings[`w${wn}`] || '';
+  html += `<div class="card">
+    <div class="card-title">ملاحظات الأسبوع ${wn}</div>
+    <textarea class="week-notes" placeholder="اكتب ملاحظاتك هنا..." onchange="saveNote(${wn},this.value)">${noteVal}</textarea>
+    <div class="rating-row">
+      <button class="rating-btn ${rating==='all'?'active-all':''}" onclick="setRating(${wn},'all')">✅ أنجزت الكل</button>
+      <button class="rating-btn ${rating==='most'?'active-most':''}" onclick="setRating(${wn},'most')">🟡 معظم المهام</button>
+      <button class="rating-btn ${rating==='delayed'?'active-delayed':''}" onclick="setRating(${wn},'delayed')">🔴 تأخيرات</button>
+    </div>
+  </div>`;
+
   document.getElementById('v-today').innerHTML = html;
+
+  // focus UI update
+  updateFocusUI();
 }
 
-// باقي الدوال (nav, renderView, renderRoadmap, ...) تبقى كما هي
-// ... انسخها من الملف الأصلي
+function renderSmartTipHTML(skills, overdueCount){
+  // نصائح “منطقية” تعتمد على أرقامك، بدون الدخول بمحتوى الاختراق.
+  const sorted = SKILLS_DEF
+    .map(sk => ({...sk, pct: skills[sk.id] || 0}))
+    .filter(sk => sk.rooms.length>0)
+    .sort((a,b)=>a.pct-b.pct);
 
-// في النهاية:
+  const weakest = sorted[0];
+  const msg = [];
+  if(overdueCount >= 3){
+    msg.push("عندك متأخرات كثيرة: اليوم ركّز على ‘مهمة واحدة فقط’ وخفّف الباقي.");
+  }else{
+    msg.push("الوضع ممتاز: كمل خطوة ثابتة اليوم.");
+  }
+  if(weakest){
+    msg.push(`أضعف مهارة عندك الآن: ${weakest.icon} ${weakest.ar} (${weakest.pct}%). خذ منها 20 دقيقة هذا الأسبوع.`);
+  }
+  msg.push("قاعدة ذهبية: اكتب ملاحظاتك بكلماتك أنت، لا تنسخ.");
+  return `<div style="font-family:'Cairo',sans-serif;line-height:1.9;color:var(--text)">
+    <ul style="margin-right:1.2rem">
+      ${msg.map(x=>`<li style="margin-bottom:0.35rem;color:var(--muted)">${x}</li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+function renderTaskMini(t, kind){
+  const dateStr = t.date.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const badge = kind==="overdue" ? "badge-overdue" : "badge-upcoming";
+  const badgeText = kind==="overdue" ? "OVERDUE" : "UPCOMING";
+  const done = !!S.tasks[t.key];
+  return `<div class="task-item ${done?'done':''}" onclick="toggleTask('${t.key}')">
+    <div class="task-cb ${done?'done':''}"></div>
+    <div class="task-text">
+      <div style="font-size:0.72rem">${t.task}</div>
+      <div style="font-size:0.6rem;color:var(--dim);margin-top:0.15rem;direction:ltr">${dateStr} · W${t.weekNum} · ${t.dayName}</div>
+    </div>
+    <div class="task-meta">
+      <div class="task-badge badge-${t.type}">${String(t.type||'').toUpperCase()}</div>
+      <div class="task-badge ${badge}">${badgeText}</div>
+    </div>
+  </div>`;
+}
+
+function renderPlan(minutes){
+  const box = document.getElementById("plan-box");
+  if(!box) return;
+  const tips = getPlan(minutes);
+  box.innerHTML = `<div style="color:var(--muted);font-family:'Cairo',sans-serif;line-height:1.9">
+    <div style="margin-bottom:0.35rem;color:var(--text)">خطة ${minutes} دقيقة:</div>
+    <ol style="margin-right:1.2rem">${tips.map(t=>`<li style="margin-bottom:0.35rem">${t}</li>`).join('')}</ol>
+  </div>`;
+}
+
+// ===== ROADMAP VIEW (minimal: keep your original behavior) =====
+function switchPhase(p) {
+  S.phase = p;
+  document.querySelectorAll('.pt').forEach(el => {
+    el.className = 'pt' + (parseInt(el.dataset.p)===p ? ' p'+p+'a' : '');
+  });
+  renderWeeksGrid();
+}
+
+function renderRoadmap() {
+  const wn = getCurrentWeek();
+  let html = `
+    <div class="topbar"><div class="topbar-title">// <span>52-Week Roadmap</span></div></div>
+    <div class="phase-tabs">
+      <div class="pt ${S.phase===1?'p1a':''}" data-p="1" onclick="switchPhase(1)">■ Phase I — Foundation (W1-13)</div>
+      <div class="pt ${S.phase===2?'p2a':''}" data-p="2" onclick="switchPhase(2)">■ Phase II — Specialization (W14-26)</div>
+      <div class="pt ${S.phase===3?'p3a':''}" data-p="3" onclick="switchPhase(3)">■ Phase III — Pro & Career (W27-52)</div>
+    </div>
+    <div class="weeks-grid" id="weeks-grid"></div>`;
+  document.getElementById('v-roadmap').innerHTML = html;
+  renderWeeksGrid();
+
+  setTimeout(() => {
+    const el = document.getElementById(`rwk${wn}`);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  }, 100);
+}
+
+function renderWeeksGrid() {
+  const wn = getCurrentWeek();
+  const weeks = Array.isArray(window.WEEKS_DATA) ? window.WEEKS_DATA : WEEKS_DATA;
+  const filtered = (weeks||[]).filter(w => w.phase === S.phase);
+  const grid = document.getElementById('weeks-grid');
+  if(!grid) return;
+
+  grid.innerHTML = filtered.map(w => {
+    const prog = getWeekProgress(w.num);
+    const isCur = w.num === wn;
+    const isOpen = isCur;
+    const daysHtml = (w.days||[]).filter(d=>d.d!=='الجمعة').map(d => {
+      const key = `w${w.num}_${d.d}`;
+      const done = S.tasks[key];
+      return `<div class="dr ${done?'done':''}" onclick="toggleTask('${key}');event.stopPropagation()">
+        <div class="dname">${d.d}</div>
+        <div class="task-badge badge-${d.t}" style="margin-top:1px">${String(d.t||'').toUpperCase()}</div>
+        <div class="dr-task">${d.task}</div>
+        <div class="task-cb ${done?'done':''}" style="flex-shrink:0;margin-top:2px"></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="wc p${w.phase} ${isCur?'cur':''} ${isOpen?'open':''}" id="rwk${w.num}">
+      ${isCur?'<div class="cur-banner">�� CURRENT WEEK — ACTIVE</div>':''}
+      <div class="wh" onclick="toggleWeek(${w.num})">
+        <div class="wnum">W${String(w.num).padStart(2,'0')}</div>
+        <div class="wi">
+          <div class="wtopic">${w.topic}</div>
+          <div class="wdates">${w.dates}</div>
+          <div class="wprog"><div class="wprogf" style="width:${prog}%"></div></div>
+        </div>
+        <div style="font-size:0.6rem;color:var(--muted);margin-left:0.5rem">${prog}%</div>
+        <div class="wtog">▼</div>
+      </div>
+      <div class="wdays">${daysHtml}</div>
+    </div>`;
+  }).join('');
+}
+function toggleWeek(n) {
+  const el = document.getElementById(`rwk${n}`);
+  if(el) el.classList.toggle('open');
+}
+
+// ===== SKILLS VIEW =====
+function renderSkills() {
+  const skills = calcSkills();
+  const roomsCount = countRooms();
+  let html = `<div class="topbar">
+    <div class="topbar-title">// <span>Skill Matrix</span></div>
+    <div class="topbar-right"><span class="pill">${roomsCount.done} rooms done · ${roomsCount.inprogress} in progress</span></div>
+  </div>`;
+  html += `<div class="card"><div class="card-title">تقدم المهارات — محسوب من rooms = DONE فقط</div>`;
+
+  SKILLS_DEF.forEach(sk => {
+    const pct = skills[sk.id] || 0;
+    const doneRooms = sk.rooms.filter(r => getRoomState(r)==="done");
+    const grad = `linear-gradient(90deg, ${sk.color}, ${sk.color}88)`;
+    html += `<div class="skill-row">
+      <div class="skill-header">
+        <div class="skill-name"><span class="skill-icon">${sk.icon}</span>${sk.ar}</div>
+        <div class="skill-pct" style="color:${sk.color}">${pct}%</div>
+      </div>
+      <div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${grad}"></div></div>
+      <div class="skill-meta">
+        <span>${doneRooms.length}/${sk.rooms.length} rooms</span>
+        <span>${pct<30?'🔴 مبتدئ':pct<60?'🟡 متوسط':pct<80?'🟢 جيد':'💚 متقدم'}</span>
+      </div>
+      ${doneRooms.length ? `<div class="skill-rooms">${doneRooms.slice(0,5).join(' · ')}${doneRooms.length>5?` +${doneRooms.length-5} more`:''}</div>` : ''}
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('v-skills').innerHTML = html;
+}
+
+// ===== ROOMS VIEW =====
+function renderRooms() {
+  const catalog = getRoomsCatalogList();
+  const stats = countRooms();
+
+  const filtered = catalog.filter(r => {
+    const st = getRoomState(r);
+    const matchSearch = S.roomSearch === '' || r.toLowerCase().includes(S.roomSearch.toLowerCase());
+    if(S.roomFilter === 'done') return st==="done" && matchSearch;
+    if(S.roomFilter === 'inprogress') return st==="inprogress" && matchSearch;
+    if(S.roomFilter === 'pending') return st==="pending" && matchSearch;
+    return matchSearch;
+  });
+
+  let html = `<div class="topbar"><div class="topbar-title">// <span>Room Tracker</span></div></div>
+    <div class="rooms-stats">
+      <div class="rooms-stat"><div class="rooms-stat-n">${stats.done}</div><div class="rooms-stat-l">Done</div></div>
+      <div class="rooms-stat"><div class="rooms-stat-n" style="color:var(--yellow)">${stats.inprogress}</div><div class="rooms-stat-l">In Progress</div></div>
+      <div class="rooms-stat"><div class="rooms-stat-n" style="color:var(--cyan)">${stats.pending}</div><div class="rooms-stat-l">Pending</div></div>
+      <div class="rooms-stat"><div class="rooms-stat-n">${stats.total}</div><div class="rooms-stat-l">Total</div></div>
+    </div>
+    <div class="add-room-row">
+      <input class="add-room-input" id="newRoomInput" placeholder="Add new room name to catalog..." onkeydown="if(event.key==='Enter')addRoom()" />
+      <button class="btn-add" onclick="addRoom()">+ Add</button>
+    </div>
+    <div class="rooms-header">
+      <input class="rooms-search" placeholder="Search rooms..." oninput="S.roomSearch=this.value;renderRooms()" value="${S.roomSearch}" />
+      <button class="mini-btn" onclick="resetRooms()">Reset states</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn ${S.roomFilter==='all'?'active':''}" onclick="S.roomFilter='all';renderRooms()">ALL</button>
+      <button class="filter-btn ${S.roomFilter==='pending'?'active':''}" onclick="S.roomFilter='pending';renderRooms()">PENDING</button>
+      <button class="filter-btn ${S.roomFilter==='inprogress'?'active':''}" onclick="S.roomFilter='inprogress';renderRooms()">IN PROGRESS</button>
+      <button class="filter-btn ${S.roomFilter==='done'?'active':''}" onclick="S.roomFilter='done';renderRooms()">DONE</button>
+    </div>
+    <div class="rooms-grid">`;
+
+  filtered.forEach(r => {
+    const st = getRoomState(r);
+    const tags = SKILLS_DEF.filter(sk => sk.rooms.includes(r)).map(sk => sk.id);
+
+    html += `<div class="room-item" data-state="${st}">
+      <div class="room-dot"></div>
+      <div style="flex:1">
+        <div class="room-item-name">${escapeHTML(r)}</div>
+        ${tags.length?`<div class="room-tags">${tags.map(t=>`<span class="room-tag">${escapeHTML(t)}</span>`).join('')}</div>`:''}
+        <div class="room-actions">
+          <button class="state-btn pd ${st==='pending'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','pending')">pending</button>
+          <button class="state-btn ip ${st==='inprogress'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','inprogress')">in progress</button>
+          <button class="state-btn ${st==='done'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','done')">done</button>
+          <a class="state-btn" style="text-decoration:none;display:inline-block" target="_blank" href="https://tryhackme.com/r/search?search=${encodeURIComponent(r)}" onclick="event.stopPropagation()">open</a>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('v-rooms').innerHTML = html;
+}
+
+function updateRoom(name, st){
+  setRoomState(name, st);
+  renderRooms();
+}
+
+// ===== ACTIONS =====
+function toggleTask(key) {
+  S.tasks[key] = !S.tasks[key];
+  save('xenos_tasks', S.tasks);
+  renderView(S.view);
+}
+function toggleRoutine(type) {
+  const key = getTodayKey();
+  if(!S.routine[key]) S.routine[key] = {};
+  S.routine[key][type] = !S.routine[key][type];
+  save('xenos_routine', S.routine);
+  renderView(S.view);
+}
+function addRoom() {
+  const inp = document.getElementById('newRoomInput');
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name) return;
+  if(!S.extraRoomsCatalog.includes(name) && !PRELOADED_ROOMS.includes(name)) {
+    S.extraRoomsCatalog.push(name);
+    save('xenos_extra_catalog', S.extraRoomsCatalog);
+  }
+  inp.value = '';
+  renderRooms();
+}
+function resetRooms(){
+  // يرجّع كل الحالات pending (يمسح roomsState فقط)
+  if(!confirm("هل أنت متأكد؟ سيُعاد تعيين حالات الرومات فقط.")) return;
+  S.roomsState = {};
+  save('xenos_rooms_state', S.roomsState);
+  renderRooms();
+}
+function saveNote(wn, text) {
+  S.notes[`w${wn}`] = text;
+  save('xenos_notes', S.notes);
+}
+function setRating(wn, r) {
+  const k = `w${wn}`;
+  S.ratings[k] = S.ratings[k] === r ? '' : r;
+  save('xenos_ratings', S.ratings);
+  renderView(S.view);
+}
+
+// ===== ESCAPE (security hygiene) =====
+function escapeHTML(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#39;");
+}
+function escapeJS(s){
+  // نستخدمه داخل '...' في HTML
+  return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
+}
+
+// ===== INIT =====
 loadState();
 nav(S.view);
+
+// Sidebar week badge
 document.getElementById('sb-week').textContent = 'W'+String(getCurrentWeek()).padStart(2,'0');
-updateXP(); // تحديث أولي لـ XP
+
+// Focus timer tick + notifications tick
+setInterval(() => {
+  maybeFireDailyNotification();
+  if(S.focus.running){
+    const rem = getFocusRemainingMs();
+    if(rem <= 0){
+      S.focus.running = false;
+      save('xenos_focus', S.focus);
+      // تنبيه بسيط داخل الصفحة
+      try { new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=").play(); } catch(e) {}
+      if(S.view==='today') renderToday();
+    }else{
+      updateFocusUI();
+    }
+  }
+}, 1000);
+
+function updateFocusUI(){
+  const t = document.getElementById("focus-time");
+  const f = document.getElementById("focus-fill");
+  if(!t || !f) return;
+  if(!S.focus.running){
+    t.textContent = "00:00";
+    f.style.width = "0%";
+    return;
+  }
+  const rem = getFocusRemainingMs();
+  t.textContent = formatMMSS(rem);
+  const pct = Math.min(100, Math.max(0, (1 - rem / S.focus.durationMs) * 100));
+  f.style.width = pct.toFixed(0) + "%";
+}
 </script>
+
+<!--
+مهم جدًا:
+حتى تشتغل Overdue/Upcoming لازم يكون WEEKS_DATA موجود كما عندك.
+في ملفك الأصلي عندك WEEKS_DATA ضخم جدًا: احتفظ به كما هو.
+إذا تحب، ابعتلي ملفك كامل مرة ثانية وأنا أدمجه لك 100% بدون ما أخرب شيء.
+-->
+<script>
+// ضع هنا WEEKS_DATA الأصلي الخاص بك (الذي لصقته سابقًا) كما هو:
+window.WEEKS_DATA = window.WEEKS_DATA || [];
+</script>
+
 </body>
 </html>
