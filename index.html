@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XENOS // Red Team OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=IBM+Plex+Mono:wght@300;400;500;600&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04080f;--bg2:#070d1a;--card:#0a1322;--card2:#0e1a2e;
+  --border:#162540;--border2:#1e3354;
+  --green:#00ff88;--cyan:#00d4ff;--red:#ff2244;--yellow:#ffd60a;--orange:#ff7c00;
+  --text:#c8daf0;--muted:#3d5a7a;--dim:#1e3354;
+  --p1:#4361ee;--p2:#06d6a0;--p3:#ef233c;
+  --sidebar:220px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;display:flex}
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,136,0.008) 3px,rgba(0,255,136,0.008) 4px);pointer-events:none;z-index:9999}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);min-height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:100}
+.sb-brand{padding:1.5rem 1rem 1rem;border-bottom:1px solid var(--border)}
+.sb-brand-name{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;color:var(--green);text-shadow:0 0 15px rgba(0,255,136,0.4);letter-spacing:0.05em}
+.sb-brand-sub{font-size:0.55rem;color:var(--muted);letter-spacing:0.2em;margin-top:0.2rem}
+.sb-nav{flex:1;padding:0.5rem 0}
+.sb-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.2rem;cursor:pointer;transition:all 0.15s;border-right:2px solid transparent;font-size:0.7rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase}
+.sb-item:hover{background:rgba(255,255,255,0.03);color:var(--text)}
+.sb-item.active{background:rgba(0,255,136,0.06);color:var(--green);border-right-color:var(--green)}
+.sb-icon{font-size:1rem;width:1.5rem;text-align:center}
+.sb-footer{padding:1rem;border-top:1px solid var(--border);font-size:0.55rem;color:var(--muted);text-align:center;line-height:1.8}
+.sb-week-badge{display:inline-block;padding:0.15rem 0.5rem;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:0.6rem;margin-top:0.3rem}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;height:100vh}
+.view{display:none;padding:2rem;min-height:100vh}
+.view.active{display:block}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:600;color:var(--muted);letter-spacing:0.3em;text-transform:uppercase}
+.topbar-title span{color:var(--green)}
+.topbar-right{font-size:0.6rem;color:var(--muted)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);padding:1.5rem;transition:border-color 0.2s}
+.card:hover{border-color:var(--border2)}
+.card-title{font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:600;color:var(--muted);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.card-title::before{content:'//';color:var(--green);font-size:0.55rem}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+
+/* TODAY VIEW */
+.today-date{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--text);line-height:1.1}
+.today-day{font-size:0.8rem;color:var(--green);margin-top:0.3rem;letter-spacing:0.1em}
+.today-week{font-size:0.65rem;color:var(--muted);margin-top:0.2rem}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(0,255,136,0.3)}
+.stat-label{font-size:0.6rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-top:0.3rem}
+.stat-sub{font-size:0.55rem;color:var(--dim);margin-top:0.2rem}
+
+/* ROUTINE CHECKS */
+.routine-item{display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+.routine-item:last-child{border-bottom:none}
+.routine-check{width:20px;height:20px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.routine-check.done{border-color:var(--green);background:rgba(0,255,136,0.1)}
+.routine-check.done::after{content:'✓';color:var(--green);font-size:0.75rem;font-weight:700}
+.routine-text{flex:1;font-family:'Cairo',sans-serif;font-size:0.85rem}
+.routine-emoji{font-size:1.2rem}
+.streak-fire{font-size:1.5rem}
+
+/* TODAY TASKS */
+.task-item{padding:0.75rem 0;border-bottom:1px solid rgba(22,37,64,0.7);display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;transition:background 0.1s}
+.task-item:hover{background:rgba(255,255,255,0.02)}
+.task-item:last-child{border-bottom:none}
+.task-cb{width:16px;height:16px;border:1px solid var(--border2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.task-cb.done{border-color:var(--green);background:rgba(0,255,136,0.15)}
+.task-cb.done::after{content:'✓';color:var(--green);font-size:0.6rem;font-weight:700}
+.task-text{font-family:'Cairo',sans-serif;font-size:0.85rem;flex:1;transition:color 0.15s}
+.task-item.done .task-text{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
+.task-badge{font-size:0.5rem;padding:0.15rem 0.45rem;border:1px solid;text-transform:uppercase;letter-spacing:0.1em;flex-shrink:0;margin-top:2px}
+.badge-thm{color:#3b9eff;border-color:rgba(59,158,255,0.4);background:rgba(59,158,255,0.07)}
+.badge-ps{color:#ff9500;border-color:rgba(255,149,0,0.4);background:rgba(255,149,0,0.07)}
+.badge-vh{color:#a855f7;border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.07)}
+.badge-wu{color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07)}
+.badge-th{color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.07)}
+.badge-pr{color:#10b981;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.07)}
+.badge-py{color:#84cc16;border-color:rgba(132,204,22,0.4);background:rgba(132,204,22,0.07)}
+.badge-gh{color:#a78bfa;border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.07)}
+.badge-bb{color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07)}
+.badge-ctf{color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07)}
+.badge-rp{color:#60a5fa;border-color:rgba(96,165,250,0.4);background:rgba(96,165,250,0.07)}
+.badge-ejpt{color:#fbbf24;border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.07)}
+.badge-ca{color:#a3e635;border-color:rgba(163,230,53,0.4);background:rgba(163,230,53,0.07)}
+.badge-lab{color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07)}
+.badge-ad{color:#14b8a6;border-color:rgba(20,184,166,0.4);background:rgba(20,184,166,0.07)}
+.badge-en{color:#38bdf8;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.07)}
+
+/* BONUS ROOM */
+.bonus-room{padding:1rem;background:rgba(59,158,255,0.06);border:1px solid rgba(59,158,255,0.2);display:flex;align-items:center;gap:1rem}
+.bonus-icon{font-size:1.5rem}
+.bonus-label{font-size:0.55rem;color:#3b9eff;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.3rem}
+.bonus-name{font-size:0.85rem;color:var(--text)}
+.bonus-link{font-size:0.6rem;color:#3b9eff;text-decoration:none;letter-spacing:0.1em;display:inline-flex;align-items:center;gap:0.3rem;margin-top:0.3rem}
+.bonus-link:hover{color:var(--cyan)}
+
+/* WEEK PROGRESS */
+.week-prog-bar{height:6px;background:var(--border);position:relative;overflow:hidden;margin-top:0.5rem}
+.week-prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width 0.5s ease}
+.week-prog-text{font-size:0.6rem;color:var(--muted);margin-top:0.3rem;display:flex;justify-content:space-between}
+
+/* NOTES */
+.week-notes{width:100%;background:rgba(10,19,34,0.8);border:1px solid var(--border);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.85rem;padding:0.75rem;resize:vertical;min-height:80px;line-height:1.6;direction:rtl}
+.week-notes:focus{outline:none;border-color:var(--border2)}
+.week-notes::placeholder{color:var(--muted)}
+.rating-row{display:flex;gap:0.5rem;margin-top:0.75rem}
+.rating-btn{padding:0.3rem 0.75rem;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.6rem;cursor:pointer;letter-spacing:0.1em;transition:all 0.15s}
+.rating-btn:hover{border-color:var(--border2);color:var(--text)}
+.rating-btn.active-all{border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.1)}
+.rating-btn.active-most{border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)}
+.rating-btn.active-delayed{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)}
+
+/* ROADMAP VIEW */
+.phase-tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.pt{padding:0.65rem 1.5rem;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.15em;cursor:pointer;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;transition:all 0.2s;color:var(--muted);background:transparent;text-transform:uppercase}
+.pt:hover{background:var(--card);color:var(--text)}
+.pt.p1a{color:var(--p1);border-color:var(--p1);background:rgba(67,97,238,0.08)}
+.pt.p2a{color:var(--p2);border-color:var(--p2);background:rgba(6,214,160,0.08)}
+.pt.p3a{color:var(--p3);border-color:var(--p3);background:rgba(239,35,60,0.08)}
+.weeks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0.75rem}
+.wc{background:var(--card);border:1px solid var(--border);transition:all 0.15s}
+.wc:hover{border-color:var(--border2)}
+.wc.cur{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,0.1)}
+.wc.p1:hover{border-color:rgba(67,97,238,0.4)}
+.wc.p2:hover{border-color:rgba(6,214,160,0.4)}
+.wc.p3:hover{border-color:rgba(239,35,60,0.3)}
+.wh{padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;border-bottom:1px solid transparent;transition:border-color 0.2s}
+.wc.open .wh{border-bottom-color:var(--border)}
+.wnum{font-family:'Orbitron',sans-serif;font-size:0.55rem;font-weight:800;padding:0.25rem 0.5rem;min-width:46px;text-align:center}
+.p1 .wnum{color:var(--p1);border:1px solid rgba(67,97,238,0.4);background:rgba(67,97,238,0.08)}
+.p2 .wnum{color:var(--p2);border:1px solid rgba(6,214,160,0.4);background:rgba(6,214,160,0.08)}
+.p3 .wnum{color:var(--p3);border:1px solid rgba(239,35,60,0.3);background:rgba(239,35,60,0.06)}
+.cur .wnum{color:var(--green)!important;border-color:var(--green)!important;background:rgba(0,255,136,0.1)!important}
+.wi{flex:1}
+.wtopic{font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text)}
+.wdates{font-size:0.55rem;color:var(--muted);margin-top:0.15rem}
+.wprog{height:2px;background:var(--border);margin-top:0.4rem}
+.wprogf{height:100%;background:var(--green);transition:width 0.3s}
+.wtog{font-size:0.7rem;color:var(--muted);transition:transform 0.2s;flex-shrink:0}
+.wc.open .wtog{transform:rotate(180deg)}
+.wdays{display:none}
+.wc.open .wdays{display:block}
+.dr{padding:0.6rem 1rem;border-bottom:1px solid rgba(22,37,64,0.5);display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;transition:background 0.1s}
+.dr:last-child{border-bottom:none}
+.dr:hover{background:rgba(255,255,255,0.02)}
+.dr.done .dr-task{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+.dname{font-family:'Orbitron',sans-serif;font-size:0.5rem;color:var(--muted);min-width:58px;padding-top:2px;letter-spacing:0.1em}
+.dr-task{font-family:'Cairo',sans-serif;font-size:0.8rem;flex:1;line-height:1.3}
+.cur-banner{background:rgba(0,255,136,0.07);border-bottom:1px solid rgba(0,255,136,0.15);padding:0.35rem;text-align:center;font-family:'Orbitron',sans-serif;font-size:0.55rem;color:var(--green);letter-spacing:0.2em}
+
+/* SKILLS VIEW */
+.skill-row{padding:1rem 0;border-bottom:1px solid rgba(22,37,64,0.5)}
+.skill-row:last-child{border-bottom:none}
+.skill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem}
+.skill-name{display:flex;align-items:center;gap:0.5rem;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:600}
+.skill-icon{font-size:1rem}
+.skill-pct{font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700}
+.skill-bar{height:8px;background:var(--border);position:relative;overflow:hidden}
+.skill-fill{height:100%;position:relative;transition:width 1s ease}
+.skill-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:20px;background:rgba(255,255,255,0.15);filter:blur(4px)}
+.skill-meta{font-size:0.6rem;color:var(--muted);margin-top:0.4rem;display:flex;justify-content:space-between}
+.skill-rooms{font-size:0.6rem;color:var(--muted);margin-top:0.3rem}
+
+/* ROOMS VIEW */
+.rooms-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+.rooms-search{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;padding:0.6rem 1rem;outline:none;direction:ltr}
+.rooms-search:focus{border-color:var(--border2)}
+.rooms-search::placeholder{color:var(--muted)}
+.add-room-row{display:flex;gap:0.5rem;margin-bottom:1rem}
+.add-room-input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.5rem 0.75rem;outline:none;direction:ltr}
+.add-room-input:focus{border-color:var(--green)}
+.btn-add{padding:0.5rem 1rem;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:0.55rem;letter-spacing:0.15em;cursor:pointer;transition:all 0.15s;text-transform:uppercase}
+.btn-add:hover{background:rgba(0,255,136,0.2)}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.5rem}
+.room-item{padding:0.65rem 0.9rem;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;gap:0.7rem;cursor:pointer;transition:all 0.15s}
+.room-item:hover{border-color:var(--border2)}
+.room-item.completed{border-color:rgba(0,255,136,0.2);background:rgba(0,255,136,0.04)}
+.room-dot{width:8px;height:8px;border:1px solid var(--muted);border-radius:50%;flex-shrink:0;transition:all 0.15s}
+.room-item.completed .room-dot{background:var(--green);border-color:var(--green);box-shadow:0 0 6px rgba(0,255,136,0.4)}
+.room-item-name{font-size:0.7rem;flex:1;line-height:1.3;direction:ltr}
+.room-tags{display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.2rem}
+.room-tag{font-size:0.45rem;padding:0.1rem 0.35rem;border:1px solid var(--dim);color:var(--muted);letter-spacing:0.05em}
+.rooms-stats{display:flex;gap:1.5rem;margin-bottom:1rem;padding:0.75rem 1rem;background:var(--card);border:1px solid var(--border)}
+.rooms-stat{text-align:center}
+.rooms-stat-n{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;color:var(--green)}
+.rooms-stat-l{font-size:0.55rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.filter-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{padding:0.3rem 0.7rem;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.55rem;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;text-transform:uppercase}
+.filter-btn:hover{color:var(--text);border-color:var(--border2)}
+.filter-btn.active{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.07)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  :root{--sidebar:60px}
+  .sb-label,.sb-brand-sub,.sb-brand-name{display:none}
+  .sb-item{justify-content:center;padding:0.75rem}
+  .sb-icon{width:auto}
+  .view{padding:1rem}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-name">XENOS</div>
+    <div class="sb-brand-sub">Red Team OS 2026</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-item active" data-view="today" onclick="nav('today')"><span class="sb-icon">⚡</span><span class="sb-label">Today</span></div>
+    <div class="sb-item" data-view="roadmap" onclick="nav('roadmap')"><span class="sb-icon">🗺️</span><span class="sb-label">Roadmap</span></div>
+    <div class="sb-item" data-view="skills" onclick="nav('skills')"><span class="sb-icon">📊</span><span class="sb-label">Skills</span></div>
+    <div class="sb-item" data-view="rooms" onclick="nav('rooms')"><span class="sb-icon">🔵</span><span class="sb-label">Rooms</span></div>
+  </div>
+  <div class="sb-footer">
+    <div>obadahamed.github.io</div>
+    <div class="sb-week-badge" id="sb-week">W??</div>
+  </div>
+</nav>
+
+<main class="main">
+  <div id="v-today" class="view active"></div>
+  <div id="v-roadmap" class="view"></div>
+  <div id="v-skills" class="view"></div>
+  <div id="v-rooms" class="view"></div>
+</main>
+
+<script>
+
+const PRELOADED_ROOMS = ["Linux Fundamentals Part 1", "Linux Fundamentals Part 2", "Linux Fundamentals Part 3", "Linux Shells", "Linux Privilege Escalation", "Windows Fundamentals 1", "Windows Fundamentals 2", "Windows Fundamentals 3", "Windows Command Line", "Windows PowerShell", "Windows Privilege Escalation", "How Websites Work", "HTTP in Detail", "Web Application Basics", "Walking An Application", "Putting it all together", "Content Discovery", "Subdomain Enumeration", "Authentication Bypass", "IDOR", "Intro to SSRF", "Intro to Cross-site Scripting", "File Inclusion", "Command Injection", "Upload Vulnerabilities", "OWASP Juice Shop", "OWASP Top 10 2025: IAAA Failures", "OWASP Top 10 2025: Application Design Flaws", "OWASP Top 10 2025: Insecure Data Handling", "JWT Security", "OAuth Vulnerabilities", "Multi-Factor Authentication", "Race Conditions", "Session Management", "Enumeration & Brute Force", "JavaScript Essentials", "OWASP API Security Top 10 - 1", "SQL Injection", "Advanced SQL Injection", "NoSQL Injection", "SQLMap: The Basics", "SQL Fundamentals", "DNS in Detail", "What is Networking?", "Intro to LAN", "OSI Model", "Packets & Frames", "Extending Your Network", "Networking Concepts", "Networking Essentials", "Networking Core Protocols", "Networking Secure Protocols", "Network Services", "Protocols and Servers", "Protocols and Servers 2", "Passive Reconnaissance", "Active Reconnaissance", "Nmap", "Nmap: The Basics", "Nmap Live Host Discovery", "Nmap Basic Port Scans", "Nmap Advanced Port Scans", "Nmap Post Port Scans", "Wireshark: The Basics", "Tcpdump: The Basics", "Net Sec Challenge", "Burp Suite: The Basics", "Burp Suite: Repeater", "Burp Suite: Intruder", "Burp Suite: Other Modules", "Burp Suite: Extensions", "Metasploit: Introduction", "Metasploit: Exploitation", "Metasploit: Meterpreter", "Vulnerability Capstone", "Exploit Vulnerabilities", "Vulnerabilities 101", "Cryptography Basics", "Hashing Basics", "Public Key Cryptography Basics", "Security Principles", "Security Awareness", "Introduction to SIEM", "SOC Fundamentals", "Digital Forensics Fundamentals", "Incident Response Fundamentals", "Logs Fundamentals", "Firewall Fundamentals", "IDS Fundamentals", "Vulnerability Scanner Overview", "CAPA: The Basics", "FlareVM: Arsenal of Tools", "REMnux: Getting Started", "Pwnkit: CVE-2021-4034", "Baron Samedit", "Sudo Buffer Overflow", "Spring4Shell: CVE-2022-22965", "Dirty Pipe: CVE-2022-0847", "Moniker Link (CVE-2024-21413)", "Pickle Rick", "Mr Robot CTF", "OhSINT", "Simple CTF", "Agent Sudo", "LazyAdmin", "Bounty Hacker", "Overpass", "RootMe", "Brooklyn Nine Nine", "Easy Peasy", "Cyborg", "Blue", "Basic Pentesting", "Gobuster: The Basics", "John the Ripper: The Basics", "CyberChef: The Basics", "Hydra", "Defensive Security Intro", "Careers in Cyber", "Offensive Security Intro", "Pentesting Fundamentals", "Learning Cyber Security", "Principles of Security", "Data Representation", "Data Encoding", "Computer Types", "Search Skills", "Shells Overview", "Active Directory Basics", "Kali Machine", "Advent of Cyber 2022", "Advent of Cyber 3 (2021)", "Advent of Cyber 2023", "Advent of Cyber 2024", "Become a Hacker", "Training Impact on Teams", "What the Shell?", "Wreath", "Corp Website", "Hidden Deep Into my Heart", "Love Letter Locker", "Cupid's Matchmaker", "TryHeartMe", "CupidBot", "Valenfind", "When Hearts Collide", "HealthGPT", "Hammer", "The Game"];
+const SKILLS_DEF = [{"id": "web", "name": "Web Exploitation", "ar": "استغلال الويب", "color": "#4361ee", "icon": "🌐", "rooms": ["How Websites Work", "HTTP in Detail", "Web Application Basics", "Walking An Application", "Putting it all together", "Content Discovery", "Subdomain Enumeration", "Authentication Bypass", "IDOR", "Intro to SSRF", "Intro to Cross-site Scripting", "File Inclusion", "Command Injection", "Upload Vulnerabilities", "OWASP Juice Shop", "OWASP Top 10 2025: IAAA Failures", "OWASP Top 10 2025: Application Design Flaws", "OWASP Top 10 2025: Insecure Data Handling", "JWT Security", "OAuth Vulnerabilities", "Multi-Factor Authentication", "Race Conditions", "Session Management", "Enumeration & Brute Force", "JavaScript Essentials", "OWASP API Security Top 10 - 1", "Advanced SQL Injection", "NoSQL Injection"]}, {"id": "sqli", "name": "SQL Injection", "ar": "SQL Injection", "color": "#7c3aed", "icon": "💉", "rooms": ["SQL Injection", "Advanced SQL Injection", "NoSQL Injection", "SQLMap: The Basics", "SQL Fundamentals"]}, {"id": "linuxPriv", "name": "Linux PrivEsc", "ar": "رفع صلاحيات Linux", "color": "#059669", "icon": "🐧", "rooms": ["Linux Privilege Escalation", "Pwnkit: CVE-2021-4034", "Baron Samedit", "Dirty Pipe: CVE-2022-0847", "Sudo Buffer Overflow", "Linux Fundamentals Part 1", "Linux Fundamentals Part 2", "Linux Fundamentals Part 3", "Linux Shells"]}, {"id": "winPriv", "name": "Windows PrivEsc", "ar": "رفع صلاحيات Windows", "color": "#0ea5e9", "icon": "🪟", "rooms": ["Windows Privilege Escalation", "Windows Fundamentals 1", "Windows Fundamentals 2", "Windows Fundamentals 3", "Windows Command Line", "Windows PowerShell"]}, {"id": "ad", "name": "Active Directory", "ar": "Active Directory", "color": "#f59e0b", "icon": "🏢", "rooms": ["Active Directory Basics", "Compromising Active Directory", "Attacktive Directory", "Enumerating Active Directory", "Breaching Active Directory", "Post-Exploitation Basics"]}, {"id": "net", "name": "Networking", "ar": "شبكات", "color": "#10b981", "icon": "🔌", "rooms": ["DNS in Detail", "What is Networking?", "Intro to LAN", "OSI Model", "Packets & Frames", "Extending Your Network", "Networking Concepts", "Networking Essentials", "Networking Core Protocols", "Networking Secure Protocols", "Network Services", "Protocols and Servers", "Protocols and Servers 2", "Passive Reconnaissance", "Active Reconnaissance", "Nmap", "Nmap: The Basics", "Nmap Live Host Discovery", "Nmap Basic Port Scans", "Nmap Advanced Port Scans", "Nmap Post Port Scans", "Wireshark: The Basics", "Tcpdump: The Basics", "Net Sec Challenge"]}, {"id": "burp", "name": "Burp Suite", "ar": "Burp Suite", "color": "#f97316", "icon": "🔥", "rooms": ["Burp Suite: The Basics", "Burp Suite: Repeater", "Burp Suite: Intruder", "Burp Suite: Other Modules", "Burp Suite: Extensions"]}, {"id": "msf", "name": "Metasploit", "ar": "Metasploit", "color": "#ef4444", "icon": "🎯", "rooms": ["Metasploit: Introduction", "Metasploit: Exploitation", "Metasploit: Meterpreter"]}, {"id": "python", "name": "Python Scripting", "ar": "Python للـ Pentest", "color": "#84cc16", "icon": "🐍", "rooms": ["Python Basics", "Python for Pentesters"]}, {"id": "report", "name": "Report Writing", "ar": "كتابة التقارير", "color": "#22d3ee", "icon": "📝", "rooms": []}];
+const WEEKS_DATA = [{"num": 1, "phase": 1, "topic": "SQL Injection — مراجعة + تطبيق حقيقي", "dates": "02/03—08/03/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "SQLi Room — Error-based + Union-based"}, {"d": "الثلاثاء", "t": "thm", "task": "SQL Injection room + PortSwigger 3 labs متقدمة"}, {"d": "الأربعاء", "t": "vh", "task": "Kioptrix 1 — أول جهاز حقيقي"}, {"d": "الخميس", "t": "wu", "task": "Write-up بالإنجليزي + رفع GitHub"}, {"d": "السبت", "t": "th", "task": "OWASP Top 10 كاملاً + فيديو SQLi"}, {"d": "الأحد", "t": "thm", "task": "SQL Injection مراجعة + تحسين Write-up"}]}, {"num": 2, "phase": 1, "topic": "XSS — Reflected + Stored + DOM", "dates": "09/03—15/03/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "XSS Room — Reflected XSS عملي"}, {"d": "الثلاثاء", "t": "thm", "task": "Stored XSS + DOM XSS"}, {"d": "الأربعاء", "t": "thm", "task": "Cross-site Scripting room + PortSwigger XSS Labs"}, {"d": "الخميس", "t": "wu", "task": "Write-up XSS كامل + رفع GitHub"}, {"d": "السبت", "t": "th", "task": "Cookie Stealing نظرية + فيديو"}, {"d": "الأحد", "t": "pr", "task": "XSS مراجعة + Cookie Stealing عملي"}]}, {"num": 3, "phase": 1, "topic": "IDOR + File Upload Vulnerabilities", "dates": "16/03—22/03/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "IDOR Room — تطبيق عملي كامل"}, {"d": "الثلاثاء", "t": "thm", "task": "Upload Vulnerabilities room + bypass extensions"}, {"d": "الأربعاء", "t": "ps", "task": "Access Control Labs + File Upload Labs"}, {"d": "الخميس", "t": "wu", "task": "Write-up IDOR + File Upload"}, {"d": "السبت", "t": "th", "task": "File Upload to RCE نظرية + فيديو"}, {"d": "الأحد", "t": "thm", "task": "Burp Suite: The Basics + File Upload to RCE عملي"}]}, {"num": 4, "phase": 1, "topic": "SSRF + SSTI", "dates": "23/03—29/03/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "SSRF Room — تطبيق عملي"}, {"d": "الثلاثاء", "t": "thm", "task": "SSRF room + SSTI — Jinja2 + Twig تطبيق"}, {"d": "الأربعاء", "t": "ps", "task": "SSRF Labs كاملة"}, {"d": "الخميس", "t": "wu", "task": "Write-up SSRF + SSTI"}, {"d": "السبت", "t": "th", "task": "SSRF + SSTI من الجذور نظرية"}, {"d": "الأحد", "t": "thm", "task": "SSTI room + تمارين إضافية"}]}, {"num": 5, "phase": 1, "topic": "Linux PrivEsc — الأساسيات", "dates": "30/03—05/04/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Linux PrivEsc Room — الجزء الأول"}, {"d": "الثلاثاء", "t": "thm", "task": "Linux PrivEsc (SUID) + GTFOBins تطبيق"}, {"d": "الأربعاء", "t": "thm", "task": "Linux PrivEsc (Sudo/Cron) + Cron Jobs Exploitation"}, {"d": "الخميس", "t": "wu", "task": "Write-up Linux PrivEsc الأساسيات"}, {"d": "السبت", "t": "th", "task": "Privilege Escalation مفهوم + IppSec"}, {"d": "الأحد", "t": "thm", "task": "Linux PrivEsc Room — الجزء الثاني"}]}, {"num": 6, "phase": 1, "topic": "Linux PrivEsc — متقدم", "dates": "06/04—12/04/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Linux PrivEsc (Path/Writable passwd) + تطبيق"}, {"d": "الثلاثاء", "t": "thm", "task": "Linux PrivEsc Arena Room كاملة"}, {"d": "الأربعاء", "t": "pr", "task": "LinPEAS — تثبيت + تفسير النتائج كاملاً"}, {"d": "الخميس", "t": "wu", "task": "Write-up Linux PrivEsc المتقدم"}, {"d": "السبت", "t": "th", "task": "NFS Exploitation + Capabilities نظرية"}, {"d": "الأحد", "t": "thm", "task": "Linux PrivEsc (NFS/Capabilities) + تطبيق"}]}, {"num": 7, "phase": 1, "topic": "VulnHub — Kioptrix 1 + 2", "dates": "13/04—19/04/2026", "days": [{"d": "الاثنين", "t": "vh", "task": "Kioptrix 1 — تثبيت + Enumeration"}, {"d": "الثلاثاء", "t": "vh", "task": "Kioptrix 1 — Exploitation + Root"}, {"d": "الأربعاء", "t": "vh", "task": "Kioptrix 2 — Enumeration + Exploitation + Root"}, {"d": "الخميس", "t": "wu", "task": "Write-up Kioptrix 1+2 + رفع GitHub"}, {"d": "السبت", "t": "th", "task": "Writeups مشابهة + IppSec"}, {"d": "الأحد", "t": "thm", "task": "Intro to Offensive Security + مراجعة PrivEsc"}]}, {"num": 8, "phase": 1, "topic": "Git/GitHub + Burp Suite متقدم", "dates": "20/04—26/04/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Git Happens room + git init/add/commit/push"}, {"d": "الثلاثاء", "t": "gh", "task": "README احترافي + رفع كل Write-ups"}, {"d": "الأربعاء", "t": "thm", "task": "Burp Suite متقدم + Authentication Bypass"}, {"d": "الخميس", "t": "wu", "task": "تنظيم GitHub Profile + Projects Section"}, {"d": "السبت", "t": "th", "task": "Git best practices + GitHub للـ Pentesters"}, {"d": "الأحد", "t": "thm", "task": "Burp Suite: Other Modules + تحسين README"}]}, {"num": 9, "phase": 1, "topic": "Networking — DNS + DHCP + Wireshark", "dates": "27/04—03/05/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "DNS in Detail + nslookup + dig + fierce"}, {"d": "الثلاثاء", "t": "thm", "task": "Network Services + DHCP + nmap متقدم"}, {"d": "الأربعاء", "t": "thm", "task": "Wireshark: The Basics + تحليل Traffic"}, {"d": "الخميس", "t": "wu", "task": "Write-up DNS Enumeration + Networking"}, {"d": "السبت", "t": "th", "task": "DNS من الجذور + DHCP نظرية"}, {"d": "الأحد", "t": "thm", "task": "Further Nmap + nmap Scripts متقدمة"}]}, {"num": 10, "phase": 1, "topic": "Command Injection + LFI/RFI", "dates": "04/05—10/05/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Command Injection room + bypass techniques"}, {"d": "الثلاثاء", "t": "ps", "task": "Command Injection Labs كاملة"}, {"d": "الأربعاء", "t": "thm", "task": "File Inclusion room + LFI to RCE + log poisoning"}, {"d": "الخميس", "t": "wu", "task": "Write-up شامل Injection Attacks"}, {"d": "السبت", "t": "th", "task": "Command Injection + LFI من OWASP نظرية"}, {"d": "الأحد", "t": "thm", "task": "LFI/RFI مراجعة + تمارين إضافية"}]}, {"num": 11, "phase": 1, "topic": "VulnHub — Kioptrix 3 + Basic Pentesting", "dates": "11/05—17/05/2026", "days": [{"d": "الاثنين", "t": "vh", "task": "Kioptrix 3 — Enumeration + Exploitation + Root"}, {"d": "الثلاثاء", "t": "thm", "task": "Basic Pentesting room + VulnHub Basic Pentesting 1"}, {"d": "الأربعاء", "t": "thm", "task": "Jr Pentester Path — أي section ناقص"}, {"d": "الخميس", "t": "wu", "task": "Write-up Kioptrix 3 + Basic Pentesting"}, {"d": "السبت", "t": "th", "task": "IppSec جهاز مشابه + Writeups"}, {"d": "الأحد", "t": "thm", "task": "Web Fundamentals مراجعة + نقاط ضعف"}]}, {"num": 12, "phase": 1, "topic": "Report Writing — تقرير Pentest احترافي", "dates": "18/05—24/05/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "OWASP Top 10 مراجعة + Executive Summary"}, {"d": "الثلاثاء", "t": "rp", "task": "Remediation + Risk Rating لكل ثغرة"}, {"d": "الأربعاء", "t": "rp", "task": "تقرير كامل لـ Kioptrix 1 بالإنجليزي"}, {"d": "الخميس", "t": "rp", "task": "مراجعة + تنسيق احترافي + GitHub"}, {"d": "السبت", "t": "th", "task": "نماذج تقارير Pentest حقيقية"}, {"d": "الأحد", "t": "rp", "task": "تحسين التقرير بناءً على النماذج"}]}, {"num": 13, "phase": 1, "topic": "مراجعة المرحلة الأولى + Mr. Robot", "dates": "25/05—31/05/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Web Exploitation مراجعة + PrivEsc نقاط ضعف"}, {"d": "الثلاثاء", "t": "vh", "task": "Mr. Robot — Enumeration + Exploitation + Root"}, {"d": "الأربعاء", "t": "pr", "task": "تحديث مقياس المهارات في Obsidian"}, {"d": "الخميس", "t": "wu", "task": "Write-up Mr. Robot + تخطيط المرحلة الثانية"}, {"d": "السبت", "t": "th", "task": "Active Directory — مقدمة نظرية"}, {"d": "الأحد", "t": "thm", "task": "Mr Robot CTF room + مراجعة Write-ups GitHub"}]}, {"num": 14, "phase": 2, "topic": "Active Directory — المفاهيم الأساسية", "dates": "01/06—07/06/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Active Directory Basics — الجزء الأول"}, {"d": "الثلاثاء", "t": "thm", "task": "Active Directory Basics — الجزء الثاني"}, {"d": "الأربعاء", "t": "thm", "task": "AD Basics (Kerberos) + Kerberos من الجذور"}, {"d": "الخميس", "t": "wu", "task": "Write-up AD Basics + Kerberos"}, {"d": "السبت", "t": "th", "task": "Domain Controller + Forest + Trust نظرية"}, {"d": "الأحد", "t": "thm", "task": "Post-Exploitation Basics + LDAP Enumeration"}]}, {"num": 15, "phase": 2, "topic": "Active Directory — Enumeration", "dates": "08/06—14/06/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Hacking with PowerShell + PowerView أساسيات"}, {"d": "الثلاثاء", "t": "thm", "task": "Enumerating Active Directory + BloodHound"}, {"d": "الأربعاء", "t": "ad", "task": "BloodHound — Attack Paths + تحليل النتائج"}, {"d": "الخميس", "t": "wu", "task": "Write-up AD Enumeration"}, {"d": "السبت", "t": "th", "task": "LDAP + PowerView نظرية + فيديو"}, {"d": "الأحد", "t": "thm", "task": "AD مراجعة + BloodHound تطبيق"}]}, {"num": 16, "phase": 2, "topic": "Active Directory — هجمات أولى", "dates": "15/06—21/06/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Attacktive Directory (AS-REP) + تطبيق"}, {"d": "الثلاثاء", "t": "thm", "task": "Attacktive Directory (Kerberoasting) + تطبيق"}, {"d": "الأربعاء", "t": "thm", "task": "Attacktive Directory Room كاملة"}, {"d": "الخميس", "t": "wu", "task": "Write-up AS-REP Roasting + Kerberoasting"}, {"d": "السبت", "t": "th", "task": "Password Spraying على AD نظرية"}, {"d": "الأحد", "t": "thm", "task": "Breaching Active Directory + Password Spraying"}]}, {"num": 17, "phase": 2, "topic": "Windows PrivEsc — الأساسيات", "dates": "22/06—28/06/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Windows PrivEsc Room — الجزء الأول"}, {"d": "الثلاثاء", "t": "thm", "task": "Windows PrivEsc (Services) + AlwaysInstallElevated"}, {"d": "الأربعاء", "t": "thm", "task": "Windows PrivEsc Arena + WinPEAS تفسير"}, {"d": "الخميس", "t": "wu", "task": "Write-up Windows PrivEsc الأساسيات"}, {"d": "السبت", "t": "th", "task": "Windows PrivEsc techniques + فيديو"}, {"d": "الأحد", "t": "thm", "task": "Windows PrivEsc Room — الجزء الثاني"}]}, {"num": 18, "phase": 2, "topic": "Windows PrivEsc — متقدم", "dates": "29/06—05/07/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Windows Local Persistence + Token Impersonation"}, {"d": "الثلاثاء", "t": "thm", "task": "Windows PrivEsc Arena (DLL) + DLL Hijacking"}, {"d": "الأربعاء", "t": "pr", "task": "PowerUp + Seatbelt تثبيت + استخدام"}, {"d": "الخميس", "t": "wu", "task": "Write-up Windows PrivEsc المتقدم"}, {"d": "السبت", "t": "th", "task": "Token Impersonation + DLL Hijacking من الجذور"}, {"d": "الأحد", "t": "thm", "task": "Windows مراجعة + كل تقنيات PrivEsc"}]}, {"num": 19, "phase": 2, "topic": "AD — Pass-the-Hash + Mimikatz", "dates": "06/07—12/07/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Compromising AD (PTH) + Pass-the-Hash تطبيق"}, {"d": "الثلاثاء", "t": "thm", "task": "Compromising AD (PTT) + Pass-the-Ticket تطبيق"}, {"d": "الأربعاء", "t": "thm", "task": "Post-Exploitation Basics (Mimikatz) + Hashes"}, {"d": "الخميس", "t": "wu", "task": "Write-up Pass-the-Hash + Mimikatz"}, {"d": "السبت", "t": "th", "task": "NTLM Authentication من الجذور"}, {"d": "الأحد", "t": "thm", "task": "Compromising AD (Tickets) + Golden Ticket"}]}, {"num": 20, "phase": 2, "topic": "Lab محلي — Windows Server + AD", "dates": "13/07—19/07/2026", "days": [{"d": "الاثنين", "t": "lab", "task": "Windows Server 2019 Trial + إعداد VM"}, {"d": "الثلاثاء", "t": "lab", "task": "AD Domain Services + إعداد Domain"}, {"d": "الأربعاء", "t": "lab", "task": "Users + Groups + OUs + ربط Kali"}, {"d": "الخميس", "t": "wu", "task": "توثيق إعداد الـ Lab كاملاً"}, {"d": "السبت", "t": "th", "task": "دليل إعداد AD Lab"}, {"d": "الأحد", "t": "thm", "task": "Breaching Active Directory + هجوم على Lab"}]}, {"num": 21, "phase": 2, "topic": "Metasploit + Meterpreter", "dates": "20/07—26/07/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Metasploit Room — Modules + Options"}, {"d": "الثلاثاء", "t": "thm", "task": "Metasploit: Meterpreter + hashdump"}, {"d": "الأربعاء", "t": "thm", "task": "Lateral Movement and Pivoting + socks proxy"}, {"d": "الخميس", "t": "wu", "task": "Write-up Metasploit + Meterpreter"}, {"d": "السبت", "t": "th", "task": "Metasploit Framework Architecture"}, {"d": "الأحد", "t": "vh", "task": "تطبيق Metasploit على جهاز VulnHub"}]}, {"num": 22, "phase": 2, "topic": "Python — أدوات Red Team", "dates": "27/07—02/08/2026", "days": [{"d": "الاثنين", "t": "py", "task": "Port Scanner + Directory Bruteforcer من الصفر"}, {"d": "الثلاثاء", "t": "py", "task": "Brute Force Script لـ HTTP Login"}, {"d": "الأربعاء", "t": "py", "task": "Script لـ SQL Injection اتوماتيكي"}, {"d": "الخميس", "t": "gh", "task": "رفع كل السكربتات + README + Documentation"}, {"d": "السبت", "t": "th", "task": "Python للـ Pentesting — best practices"}, {"d": "الأحد", "t": "thm", "task": "Python Basics مراجعة + Requests + BeautifulSoup"}]}, {"num": 23, "phase": 2, "topic": "VulnHub — DC-1 + DC-2", "dates": "03/08—09/08/2026", "days": [{"d": "الاثنين", "t": "vh", "task": "DC-1 — Enumeration + Exploitation + Root"}, {"d": "الثلاثاء", "t": "vh", "task": "DC-2 — Enumeration + Exploitation + Root"}, {"d": "الأربعاء", "t": "thm", "task": "مراجعة room مرتبط بالثغرات + نقاط ضعف"}, {"d": "الخميس", "t": "wu", "task": "Write-up DC-1 + DC-2 بالإنجليزي"}, {"d": "السبت", "t": "th", "task": "IppSec جهاز مشابه + Writeups"}, {"d": "الأحد", "t": "thm", "task": "DC-related room + تقنيات جديدة"}]}, {"num": 24, "phase": 2, "topic": "تقرير Pentest احترافي كامل", "dates": "10/08—16/08/2026", "days": [{"d": "الاثنين", "t": "rp", "task": "اختيار VulnHub + إعادة اختباره + توثيق"}, {"d": "الثلاثاء", "t": "rp", "task": "Executive Summary + Findings بالتفصيل"}, {"d": "الأربعاء", "t": "rp", "task": "Remediation + Risk Rating + تنسيق"}, {"d": "الخميس", "t": "rp", "task": "مراجعة نهائية + GitHub + LinkedIn"}, {"d": "السبت", "t": "th", "task": "نماذج تقارير احترافية + مقارنة"}, {"d": "الأحد", "t": "thm", "task": "Intro to Research + تحسين التقرير"}]}, {"num": 25, "phase": 2, "topic": "English Technical — تقوية مكثفة", "dates": "17/08—23/08/2026", "days": [{"d": "الاثنين", "t": "en", "task": "THM room بالإنجليزي + 3 Write-ups من HackerOne"}, {"d": "الثلاثاء", "t": "en", "task": "Write-up بالإنجليزي من الذاكرة"}, {"d": "الأربعاء", "t": "en", "task": "محادثة مع Claude تقنية بالإنجليزي — ساعة"}, {"d": "الخميس", "t": "en", "task": "LinkedIn Post بالإنجليزي"}, {"d": "السبت", "t": "th", "task": "IppSec بدون ترجمة + مصطلحات جديدة"}, {"d": "الأحد", "t": "en", "task": "20 مصطلح تقني + جمل + Write-up"}]}, {"num": 26, "phase": 2, "topic": "مراجعة المرحلة الثانية + Vulnix", "dates": "24/08—30/08/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Compromising AD مراجعة + نقاط ضعف"}, {"d": "الثلاثاء", "t": "vh", "task": "Vulnix — Enumeration + Exploitation + Root"}, {"d": "الأربعاء", "t": "pr", "task": "تحديث مقياس المهارات"}, {"d": "الخميس", "t": "wu", "task": "Write-up Vulnix + تخطيط المرحلة الثالثة"}, {"d": "السبت", "t": "th", "task": "Bug Bounty — مقدمة للمرحلة القادمة"}, {"d": "الأحد", "t": "thm", "task": "مراجعة شاملة + GitHub"}]}, {"num": 27, "phase": 3, "topic": "Bug Bounty — التحضير والـ Recon", "dates": "31/08—06/09/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Content Discovery + HackerOne + 5 Write-ups"}, {"d": "الثلاثاء", "t": "bb", "task": "Recon أتمتة — subfinder + amass + httpx"}, {"d": "الأربعاء", "t": "thm", "task": "Subdomain Enumeration + ffuf"}, {"d": "الخميس", "t": "wu", "task": "توثيق Recon Methodology كاملاً"}, {"d": "السبت", "t": "th", "task": "Bug Bounty Scope + Rules of Engagement"}, {"d": "الأحد", "t": "bb", "task": "اختيار برنامج مناسب + بداية الاختبار"}]}, {"num": 28, "phase": 3, "topic": "Bug Bounty — Recon متقدم", "dates": "07/09—13/09/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "JavaScript Deobfuscation + linkfinder + secrets"}, {"d": "الثلاثاء", "t": "thm", "task": "Google Dorking + Shodan + Censys"}, {"d": "الأربعاء", "t": "bb", "task": "اختبار مكثف على البرنامج المختار"}, {"d": "الخميس", "t": "wu", "task": "Write-up Recon Methodology المتقدمة"}, {"d": "السبت", "t": "th", "task": "5 Writeups من HackerOne"}, {"d": "الأحد", "t": "bb", "task": "كتابة أول Bug Report"}]}, {"num": 29, "phase": 3, "topic": "eJPT — تحضير أسبوع 1", "dates": "14/09—20/09/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Networking مراجعة شاملة + INE Syllabus"}, {"d": "الثلاثاء", "t": "thm", "task": "Web Vulnerabilities مراجعة شاملة"}, {"d": "الأربعاء", "t": "thm", "task": "Metasploit مراجعة + Post Exploitation"}, {"d": "الخميس", "t": "vh", "task": "جهاز كامل بدون مساعدة — اختبار نفسك"}, {"d": "السبت", "t": "th", "task": "eJPT exam tips + تجارب ناجحين"}, {"d": "الأحد", "t": "pr", "task": "تقييم ذاتي + تحديد نقاط الضعف"}]}, {"num": 30, "phase": 3, "topic": "eJPT — تحضير أسبوع 2", "dates": "21/09—27/09/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Linux + Windows PrivEsc مراجعة"}, {"d": "الثلاثاء", "t": "thm", "task": "Lateral Movement and Pivoting + تطبيق"}, {"d": "الأربعاء", "t": "vh", "task": "جهازين بدون مساعدة"}, {"d": "الخميس", "t": "ejpt", "task": "مراجعة أخيرة + قرار التسجيل"}, {"d": "السبت", "t": "th", "task": "Pivoting + Port Forwarding نظرية"}, {"d": "الأحد", "t": "thm", "task": "Warm-up room + مراجعة شاملة"}]}, {"num": 31, "phase": 3, "topic": "Active Directory — هجمات متقدمة", "dates": "28/09—04/10/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Compromising AD (DCSync) + DCSync Attack"}, {"d": "الثلاثاء", "t": "thm", "task": "Compromising AD (Tickets) + Silver + Golden Ticket"}, {"d": "الأربعاء", "t": "thm", "task": "AD Certificate Templates + ACL Abuse"}, {"d": "الخميس", "t": "wu", "task": "Write-up AD Advanced Attacks"}, {"d": "السبت", "t": "th", "task": "DCSync + Silver/Golden Ticket من الجذور"}, {"d": "الأحد", "t": "thm", "task": "Compromising AD full + هجوم Lab"}]}, {"num": 32, "phase": 3, "topic": "Bug Bounty — Submission + Web Advanced", "dates": "05/10—11/10/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Advanced XSS + اختبار مكثف + Bug Report"}, {"d": "الثلاثاء", "t": "thm", "task": "Burp Suite: Extensions + SQLmap متقدم"}, {"d": "الأربعاء", "t": "thm", "task": "Content Discovery + ffuf + gobuster + Nikto"}, {"d": "الخميس", "t": "wu", "task": "Write-up Web App Testing Methodology"}, {"d": "السبت", "t": "th", "task": "CORS + Subdomain Takeover نظرية"}, {"d": "الأحد", "t": "bb", "task": "CORS Misconfiguration + Open Redirect عملي"}]}, {"num": 33, "phase": 3, "topic": "CTF — المشاركة الأولى", "dates": "12/10—18/10/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "CTF Web challenges + 3 تحديات PicoCTF"}, {"d": "الثلاثاء", "t": "thm", "task": "CTF Linux challenges + 3 تحديات PrivEsc"}, {"d": "الأربعاء", "t": "ctf", "task": "CTF حي أو HackTheBox Starting Point"}, {"d": "الخميس", "t": "wu", "task": "Write-up CTF challenges"}, {"d": "السبت", "t": "th", "task": "Writeups من فرق محترفة + تقنيات جديدة"}, {"d": "الأحد", "t": "ctf", "task": "تحديات إضافية + CTFtime.org"}]}, {"num": 34, "phase": 3, "topic": "Python — أدوات Red Team متقدمة", "dates": "19/10—25/10/2026", "days": [{"d": "الاثنين", "t": "py", "task": "بناء Reverse Shell Handler"}, {"d": "الثلاثاء", "t": "py", "task": "Network Scanner متقدم + Keylogger بسيط"}, {"d": "الأربعاء", "t": "py", "task": "Encode/Obfuscate Payload — تجاوز AV"}, {"d": "الخميس", "t": "gh", "task": "رفع الأدوات + README احترافي"}, {"d": "السبت", "t": "th", "task": "Python Malware Development نظرية"}, {"d": "الأحد", "t": "thm", "task": "Python Basics مراجعة + تحسين الأدوات"}]}, {"num": 35, "phase": 3, "topic": "LinkedIn + CV + Personal Brand", "dates": "26/10—01/11/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Security Awareness room + LinkedIn Profile + CV"}, {"d": "الثلاثاء", "t": "ca", "task": "GitHub Profile README + Projects Section"}, {"d": "الأربعاء", "t": "ca", "task": "أول LinkedIn Post عن رحلة التعلم"}, {"d": "الخميس", "t": "ca", "task": "بحث شركات + Job Descriptions"}, {"d": "السبت", "t": "th", "task": "كيف يبحث الـ Recruiters في السيبراني"}, {"d": "الأحد", "t": "ca", "task": "10 شركات هدف + LinkedIn Outreach"}]}, {"num": 36, "phase": 3, "topic": "VulnHub — أجهزة صعبة", "dates": "02/11—08/11/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Symfonos room + VulnHub Symfonos 1"}, {"d": "الثلاثاء", "t": "vh", "task": "HackLAB Vulnix — كامل"}, {"d": "الأربعاء", "t": "pr", "task": "مراجعة + نقاط ضعف ظهرت"}, {"d": "الخميس", "t": "wu", "task": "Write-up Symfonos + Vulnix"}, {"d": "السبت", "t": "th", "task": "IppSec أجهزة مشابهة + تقنيات جديدة"}, {"d": "الأحد", "t": "thm", "task": "مراجعة techniques + إعادة حل جهاز"}]}, {"num": 37, "phase": 3, "topic": "تحضير Interview — أسبوع 1", "dates": "09/11—15/11/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Web Exploitation مراجعة + أسئلة شائعة"}, {"d": "الثلاثاء", "t": "thm", "task": "PrivEsc + AD مراجعة + أسئلة Interview"}, {"d": "الأربعاء", "t": "pr", "task": "Explain your methodology بالإنجليزي"}, {"d": "الخميس", "t": "pr", "task": "Mock Interview كامل مع Claude بالإنجليزي"}, {"d": "السبت", "t": "th", "task": "أسئلة Interview سيبراني + إعداد إجاباتها"}, {"d": "الأحد", "t": "pr", "task": "مراجعة نقاط الضعف + تحسين الإجابات"}]}, {"num": 38, "phase": 3, "topic": "Bug Bounty — مكثف", "dates": "16/11—22/11/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "JWT Security + Rate Limiting Bypass"}, {"d": "الثلاثاء", "t": "thm", "task": "OAuth Vulnerabilities + Misconfigurations عملي"}, {"d": "الأربعاء", "t": "bb", "task": "API Security — REST + GraphQL اختبار"}, {"d": "الخميس", "t": "wu", "task": "Write-up Bug Bounty Methodology الكاملة"}, {"d": "السبت", "t": "th", "task": "JWT + OAuth نظرية من الجذور"}, {"d": "الأحد", "t": "bb", "task": "Submission جديد + متابعة Reports"}]}, {"num": 39, "phase": 3, "topic": "API Security + Web Advanced", "dates": "23/11—29/11/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "JWT Attacks room + PortSwigger JWT Labs"}, {"d": "الثلاثاء", "t": "thm", "task": "API Security + BOLA على APIs"}, {"d": "الأربعاء", "t": "pr", "task": "API Fuzzing — ffuf + GraphQL Introspection"}, {"d": "الخميس", "t": "wu", "task": "Write-up API Security Testing"}, {"d": "السبت", "t": "th", "task": "OWASP API Security Top 10"}, {"d": "الأحد", "t": "pr", "task": "تطبيق API Security على بيئة تدريب"}]}, {"num": 40, "phase": 3, "topic": "⚡ eJPT Exam Week", "dates": "30/11—06/12/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Networking مراجعة أخيرة + Web"}, {"d": "الثلاثاء", "t": "thm", "task": "PrivEsc مراجعة أخيرة + Metasploit"}, {"d": "الأربعاء", "t": "vh", "task": "Warm-up — جهاز سريع قبل الامتحان"}, {"d": "الخميس", "t": "ejpt", "task": "⚡ eJPT EXAM — يوم الامتحان"}, {"d": "السبت", "t": "th", "task": "راحة + مراجعة خفيفة فقط"}, {"d": "الأحد", "t": "pr", "task": "مراجعة نتائج + خطة ما بعد eJPT"}]}, {"num": 41, "phase": 3, "topic": "OSCP Prep — Buffer Overflow", "dates": "07/12—13/12/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Buffer Overflow Prep (intro) + نظرية + Python"}, {"d": "الثلاثاء", "t": "thm", "task": "Buffer Overflow Prep Room كاملة"}, {"d": "الأربعاء", "t": "vh", "task": "Brainpan — Buffer Overflow عملي"}, {"d": "الخميس", "t": "wu", "task": "Write-up Buffer Overflow كامل"}, {"d": "السبت", "t": "th", "task": "OSCP Syllabus + خطة التحضير الكاملة"}, {"d": "الأحد", "t": "thm", "task": "Buffer Overflow مراجعة + تطبيق"}]}, {"num": 42, "phase": 3, "topic": "تقديم وظائف — الجولة الأولى", "dates": "14/12—20/12/2026", "days": [{"d": "الاثنين", "t": "ca", "task": "تحديث CV + LinkedIn بعد eJPT + 3 وظائف"}, {"d": "الثلاثاء", "t": "ca", "task": "تقديم 3 وظائف + LinkedIn Outreach"}, {"d": "الأربعاء", "t": "ca", "task": "تقديم 3 وظائف + متابعة التقديمات"}, {"d": "الخميس", "t": "ca", "task": "تحليل Job Descriptions + فجوات المهارات"}, {"d": "السبت", "t": "th", "task": "كيف تجهز لـ Technical Interview"}, {"d": "الأحد", "t": "thm", "task": "أي room ناقص للـ Interview + 3 وظائف"}]}, {"num": 43, "phase": 3, "topic": "Red Team Concepts", "dates": "21/12—27/12/2026", "days": [{"d": "الاثنين", "t": "thm", "task": "Red Team Fundamentals + MITRE ATT&CK"}, {"d": "الثلاثاء", "t": "thm", "task": "Living off the Land + LOLBins تطبيق"}, {"d": "الأربعاء", "t": "thm", "task": "Red Team OPSEC + Persistence Mechanisms"}, {"d": "الخميس", "t": "wu", "task": "Write-up Red Team Methodology"}, {"d": "السبت", "t": "th", "task": "Red Team vs Pentest + C2 Frameworks"}, {"d": "الأحد", "t": "lab", "task": "MITRE ATT&CK على Lab المحلي"}]}, {"num": 44, "phase": 3, "topic": "OSCP Prep — AV Evasion + Client-Side", "dates": "28/12—03/01/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "AV Evasion: Shellcode + أدوات أساسية"}, {"d": "الثلاثاء", "t": "thm", "task": "Phishing + Client-Side Attacks (Macro/HTA)"}, {"d": "الأربعاء", "t": "thm", "task": "Tunneling + Port Forwarding متقدم"}, {"d": "الخميس", "t": "wu", "task": "Write-up OSCP Advanced Topics"}, {"d": "السبت", "t": "th", "task": "AV Evasion techniques نظرية"}, {"d": "الأحد", "t": "vh", "task": "Brainpan 2 — Exploitation"}]}, {"num": 45, "phase": 3, "topic": "CTF مكثف + Portfolio", "dates": "04/01—10/01/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "CTF challenges + 5 تحديات CTF متنوعة"}, {"d": "الثلاثاء", "t": "ctf", "task": "المشاركة في CTF حي"}, {"d": "الأربعاء", "t": "ca", "task": "مراجعة GitHub + Projects Section"}, {"d": "الخميس", "t": "ca", "task": "LinkedIn — ملخص رحلة 9 أشهر"}, {"d": "السبت", "t": "th", "task": "Writeups من فرق CTF محترفة"}, {"d": "الأحد", "t": "thm", "task": "CTF room إضافية + Write-up"}]}, {"num": 46, "phase": 3, "topic": "تحضير Interview — عملي", "dates": "11/01—17/01/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "Web Exploitation عملي + Technical Questions"}, {"d": "الثلاثاء", "t": "thm", "task": "AD + PrivEsc عملي + Technical Questions"}, {"d": "الأربعاء", "t": "pr", "task": "Walk me through a pentest — تدريب كامل"}, {"d": "الخميس", "t": "pr", "task": "Mock Interview كامل بالإنجليزي مع Claude"}, {"d": "السبت", "t": "th", "task": "أسئلة Interview صعبة + إجاباتها"}, {"d": "الأحد", "t": "pr", "task": "مراجعة نقاط الضعف + تحسين الإجابات"}]}, {"num": 47, "phase": 3, "topic": "تقديم وظائف — الجولة الثانية", "dates": "18/01—24/01/2027", "days": [{"d": "الاثنين", "t": "ca", "task": "تحليل ردود الجولة الأولى + تعديل CV"}, {"d": "الثلاثاء", "t": "ca", "task": "تقديم 5 وظائف جديدة"}, {"d": "الأربعاء", "t": "ca", "task": "LinkedIn Networking — 10 Pentesters"}, {"d": "الخميس", "t": "thm", "task": "Bug Bounty room + استمرار البحث"}, {"d": "السبت", "t": "th", "task": "Salary negotiation + contract review"}, {"d": "الأحد", "t": "ca", "task": "متابعة التقديمات + 3 إضافية"}]}, {"num": 48, "phase": 3, "topic": "مراجعة شاملة — كل المهارات", "dates": "25/01—31/01/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "Web Exploitation مراجعة كاملة"}, {"d": "الثلاثاء", "t": "thm", "task": "PrivEsc Linux + Windows مراجعة"}, {"d": "الأربعاء", "t": "thm", "task": "AD + Networking مراجعة"}, {"d": "الخميس", "t": "pr", "task": "تحديث مقياس المهارات النهائي"}, {"d": "السبت", "t": "th", "task": "سيبراني في سوق العمل العربي"}, {"d": "الأحد", "t": "pr", "task": "مقارنة مستواك مع بداية السنة"}]}, {"num": 49, "phase": 3, "topic": "Bug Bounty + VulnHub — قبل الأخير", "dates": "01/02—07/02/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "Advanced Web room + BB اختبار مكثف"}, {"d": "الثلاثاء", "t": "thm", "task": "Warm-up room + جهاز VulnHub صعب"}, {"d": "الأربعاء", "t": "bb", "task": "Bug Bounty — Submission + متابعة"}, {"d": "الخميس", "t": "wu", "task": "Write-up أخير + رفع GitHub"}, {"d": "السبت", "t": "th", "task": "OSCP experience من ناس اجتازوه"}, {"d": "الأحد", "t": "ca", "task": "تحديث CV النهائي + LinkedIn"}]}, {"num": 50, "phase": 3, "topic": "خطة OSCP + التقديم النهائي", "dates": "08/02—14/02/2027", "days": [{"d": "الاثنين", "t": "ca", "task": "تقديم مكثف — 5 وظائف"}, {"d": "الثلاثاء", "t": "ca", "task": "LinkedIn Outreach — 10 أشخاص"}, {"d": "الأربعاء", "t": "thm", "task": "OSCP-style room + خطة ادخار OSCP"}, {"d": "الخميس", "t": "thm", "task": "Advanced PrivEsc + Exploitation + OSCP Labs"}, {"d": "السبت", "t": "th", "task": "OSCP PWK Course material المجاني"}, {"d": "الأحد", "t": "ca", "task": "متابعة التقديمات + 3 إضافية"}]}, {"num": 51, "phase": 3, "topic": "نهاية السنة — تقييم شامل", "dates": "15/02—21/02/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "Final Review — أصعب room + مراجعة كاملة"}, {"d": "الثلاثاء", "t": "pr", "task": "تحديث مقياس المهارات النهائي"}, {"d": "الأربعاء", "t": "ca", "task": "LinkedIn Post عن رحلة السنة"}, {"d": "الخميس", "t": "thm", "task": "Challenge room أخير + مراجعة GitHub"}, {"d": "السبت", "t": "th", "task": "أهداف السنة الثانية — OSCP"}, {"d": "الأحد", "t": "pr", "task": "تحديد أهداف السنة الثانية + خطة"}]}, {"num": 52, "phase": 3, "topic": "🎉 الأسبوع الأخير — احتفال", "dates": "22/02—28/02/2027", "days": [{"d": "الاثنين", "t": "thm", "task": "Final — أصعب room + مراجعة نهائية"}, {"d": "الثلاثاء", "t": "ca", "task": "تقديم آخر دفعة وظائف"}, {"d": "الأربعاء", "t": "pr", "task": "تقرير سنوي عن رحلتك كاملاً"}, {"d": "الخميس", "t": "pr", "task": "خطة السنة الثانية — OSCP + تخصص"}, {"d": "السبت", "t": "th", "task": "قراءة + تأمل — ماذا تعلمت؟"}, {"d": "الأحد", "t": "pr", "task": "🎉 سنة كاملة من العمل الجاد — تستاهل!"}]}];
+const BONUS_POOL = ["Pickle Rick", "RootMe", "Simple CTF", "Agent Sudo", "LazyAdmin", "Bounty Hacker", "Overpass", "Brooklyn Nine Nine", "Easy Peasy", "Cyborg", "Blue", "Basic Pentesting", "OhSINT", "Mr Robot CTF", "Overpass 2 - Hacked", "Advent of Cyber 2022", "Net Sec Challenge", "Nmap", "Wreath", "OWASP Juice Shop", "Enumeration & Brute Force", "Hydra", "John the Ripper: The Basics", "CyberChef: The Basics", "Gobuster: The Basics", "Intro to SSRF", "File Inclusion", "Command Injection", "Upload Vulnerabilities", "IDOR", "Authentication Bypass", "Race Conditions", "JWT Security", "OAuth Vulnerabilities", "Pwnkit: CVE-2021-4034", "Baron Samedit", "Dirty Pipe: CVE-2022-0847", "Blue", "Vulnerabilities 101", "Exploit Vulnerabilities", "What the Shell?", "Shells Overview", "Metasploit: Introduction", "Metasploit: Exploitation", "Metasploit: Meterpreter", "Linux Privilege Escalation", "Windows Privilege Escalation", "Active Directory Basics", "Passive Reconnaissance", "Active Reconnaissance", "Nmap Live Host Discovery", "Wireshark: The Basics", "Tcpdump: The Basics", "SQLMap: The Basics", "Hydra", "Kali Machine", "Search Skills", "CyberChef: The Basics", "Logs Fundamentals"];
+const START_DATE = new Date('2026-03-02');
+
+
+// ===== STATE =====
+const S = {
+  tasks: {},        // key: "w{n}_{day}", val: bool
+  routine: {},      // key: "yyyy-mm-dd", val: {teeth:bool, exercise:bool}
+  extraRooms: [],   // user-added room names
+  notes: {},        // key: "w{n}", val: string
+  ratings: {},      // key: "w{n}", val: string
+  view: 'today',
+  phase: 1,
+  roomFilter: 'all',
+  roomSearch: '',
+};
+
+function loadState() {
+  try {
+    const t = localStorage.getItem('xenos_tasks'); if(t) S.tasks = JSON.parse(t);
+    const r = localStorage.getItem('xenos_routine'); if(r) S.routine = JSON.parse(r);
+    const e = localStorage.getItem('xenos_extra'); if(e) S.extraRooms = JSON.parse(e);
+    const n = localStorage.getItem('xenos_notes'); if(n) S.notes = JSON.parse(n);
+    const g = localStorage.getItem('xenos_ratings'); if(g) S.ratings = JSON.parse(g);
+    const v = localStorage.getItem('xenos_view'); if(v) S.view = v;
+  } catch(err) { console.log('State load error:', err); }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+// ===== COMPUTED =====
+function getAllRooms() {
+  const all = new Set([...PRELOADED_ROOMS, ...S.extraRooms]);
+  return all;
+}
+function isRoomDone(name) { return getAllRooms().has(name); }
+
+function calcSkills() {
+  const res = {};
+  SKILLS_DEF.forEach(sk => {
+    if(!sk.rooms.length) { res[sk.id] = 0; return; }
+    const done = sk.rooms.filter(r => isRoomDone(r)).length;
+    res[sk.id] = Math.round(done / sk.rooms.length * 100);
+  });
+  return res;
+}
+
+function getCurrentWeek() {
+  const now = new Date();
+  const diff = Math.floor((now - START_DATE) / (7 * 24 * 3600 * 1000));
+  return Math.min(52, Math.max(1, diff + 1));
+}
+
+function getWeekProgress(wn) {
+  const wk = WEEKS_DATA.find(w => w.num === wn);
+  if(!wk) return 0;
+  const days = wk.days;
+  const done = days.filter(d => S.tasks[`w${wn}_${d.d}`]).length;
+  return days.length ? Math.round(done / days.length * 100) : 0;
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getTodayDayName() {
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  return days[new Date().getDay()];
+}
+
+function getBonusRoom() {
+  const daysSinceStart = Math.floor((new Date() - START_DATE) / (24*3600*1000));
+  return BONUS_POOL[Math.abs(daysSinceStart) % BONUS_POOL.length];
+}
+
+function getStreak() {
+  let streak = 0;
+  const today = new Date();
+  for(let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const r = S.routine[key];
+    if(r && r.teeth && r.exercise) streak++;
+    else if(i > 0) break;
+  }
+  return streak;
+}
+
+function getTotalTasksDone() {
+  return Object.values(S.tasks).filter(Boolean).length;
+}
+
+function formatDate() {
+  const d = new Date();
+  return d.toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+
+// ===== VIEWS =====
+function nav(v) {
+  S.view = v;
+  save('xenos_view', v);
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view === v));
+  document.querySelectorAll('.view').forEach(el => el.classList.toggle('active', el.id === 'v-'+v));
+  renderView(v);
+}
+
+function renderView(v) {
+  if(v === 'today') renderToday();
+  else if(v === 'roadmap') renderRoadmap();
+  else if(v === 'skills') renderSkills();
+  else if(v === 'rooms') renderRooms();
+}
+
+// ===== TODAY VIEW =====
+function renderToday() {
+  const wn = getCurrentWeek();
+  const wk = WEEKS_DATA.find(w => w.num === wn);
+  const dayName = getTodayDayName();
+  const todayKey = getTodayKey();
+  const routine = S.routine[todayKey] || {};
+  const streak = getStreak();
+  const bonus = getBonusRoom();
+  const skills = calcSkills();
+  const totalRooms = getAllRooms().size;
+
+  const todayDay = wk ? wk.days.find(d => d.d === dayName) : null;
+  const allTasks = wk ? wk.days : [];
+
+  let html = `
+    <div class="topbar">
+      <div class="topbar-title">// <span>Today's Mission</span></div>
+      <div class="topbar-right">${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+    </div>
+    <div style="margin-bottom:1.5rem">
+      <div class="today-date">${formatDate()}</div>
+      <div class="today-day">الأسبوع ${wn} — ${wk ? wk.topic : '...'}</div>
+      <div class="today-week">${wk ? wk.dates : ''}</div>
+    </div>
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="stat-num">${wn}<span style="font-size:1rem;color:var(--muted)">/52</span></div>
+        <div class="stat-label">Current Week</div>
+        <div class="stat-sub">المرحلة ${wk ? wk.phase : 1}</div>
+      </div>
+      <div class="card">
+        <div class="stat-num" style="color:${streak>=7?'var(--yellow)':streak>=3?'var(--orange)':'var(--green)'}">${streak}</div>
+        <div class="stat-label">Streak <span class="streak-fire">${streak>=7?'🔥':streak>=3?'✨':'⚡'}</span></div>
+        <div class="stat-sub">يوم متتالي — دنتال + تمرين</div>
+      </div>
+      <div class="card">
+        <div class="stat-num" style="color:var(--cyan)">${totalRooms}</div>
+        <div class="stat-label">Rooms Done</div>
+        <div class="stat-sub">THM Rooms مكتملة</div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-title">الروتين اليومي</div>
+  `;
+
+  ['teeth','exercise'].forEach(type => {
+    const done = routine[type];
+    const emoji = type === 'teeth' ? '🪥' : '💪';
+    const label = type === 'teeth' ? 'تفريش الأسنان' : 'تمرين';
+    html += `<div class="routine-item" onclick="toggleRoutine('${type}')">
+      <span class="routine-emoji">${emoji}</span>
+      <span class="routine-text">${label}</span>
+      <div class="routine-check ${done?'done':''}"></div>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  // Bonus room
+  html += `
+    <div class="card">
+      <div class="card-title">Bonus THM Room</div>
+      <div class="bonus-room">
+        <div class="bonus-icon">🔵</div>
+        <div>
+          <div class="bonus-label">Room of the Day</div>
+          <div class="bonus-name">${bonus}</div>
+          <a href="https://tryhackme.com/r/search?search=${encodeURIComponent(bonus)}" target="_blank" class="bonus-link">Open on THM ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // Today's tasks
+  html += `<div class="card" style="margin-bottom:1.5rem"><div class="card-title">مهام اليوم — ${dayName}</div>`;
+  if(!todayDay) {
+    if(dayName === 'الجمعة') html += `<div style="text-align:center;padding:2rem;color:var(--muted);font-family:'Cairo',sans-serif;font-size:1rem">🔴 يوم العطلة — استرح وأعد شحن طاقتك</div>`;
+    else html += `<div style="padding:1rem;color:var(--muted);font-family:'Cairo',sans-serif">لا توجد مهمة محددة لهذا اليوم.</div>`;
+  } else {
+    const key = `w${wn}_${todayDay.d}`;
+    const done = S.tasks[key];
+    html += `<div class="task-item ${done?'done':''}" onclick="toggleTask('${key}')">
+      <div class="task-cb ${done?'done':''}"></div>
+      <div class="task-text">${todayDay.task}</div>
+      <div class="task-badge badge-${todayDay.t}">${todayDay.t.toUpperCase()}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // All week tasks
+  html += `<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">كل مهام الأسبوع ${wn}</div>
+    <div class="week-prog-bar"><div class="week-prog-fill" style="width:${getWeekProgress(wn)}%"></div></div>
+    <div class="week-prog-text"><span>التقدم</span><span>${getWeekProgress(wn)}%</span></div>
+    <div style="margin-top:1rem">`;
+
+  if(wk) {
+    wk.days.forEach(d => {
+      const key = `w${wn}_${d.d}`;
+      const done = S.tasks[key];
+      const isFri = d.d === 'الجمعة';
+      if(isFri) return;
+      html += `<div class="task-item ${done?'done':''}" onclick="toggleTask('${key}')">
+        <div class="task-cb ${done?'done':''}"></div>
+        <div style="min-width:60px;font-family:'Orbitron',sans-serif;font-size:0.5rem;color:var(--muted);padding-top:2px">${d.d}</div>
+        <div class="task-text">${d.task}</div>
+        <div class="task-badge badge-${d.t}">${d.t.toUpperCase()}</div>
+      </div>`;
+    });
+  }
+  html += `</div></div>`;
+
+  // Week notes
+  const noteVal = S.notes[`w${wn}`] || '';
+  const rating = S.ratings[`w${wn}`] || '';
+  html += `<div class="card">
+    <div class="card-title">ملاحظات الأسبوع ${wn}</div>
+    <textarea class="week-notes" placeholder="اكتب ملاحظاتك هنا..." onchange="saveNote(${wn},this.value)">${noteVal}</textarea>
+    <div class="rating-row">
+      <button class="rating-btn ${rating==='all'?'active-all':''}" onclick="setRating(${wn},'all')">✅ أنجزت الكل</button>
+      <button class="rating-btn ${rating==='most'?'active-most':''}" onclick="setRating(${wn},'most')">🟡 معظم المهام</button>
+      <button class="rating-btn ${rating==='delayed'?'active-delayed':''}" onclick="setRating(${wn},'delayed')">🔴 تأخيرات</button>
+    </div>
+  </div>`;
+
+  document.getElementById('v-today').innerHTML = html;
+}
+
+// ===== ROADMAP VIEW =====
+function switchPhase(p) {
+  S.phase = p;
+  document.querySelectorAll('.pt').forEach(el => {
+    el.className = 'pt' + (parseInt(el.dataset.p)===p ? ' p'+p+'a' : '');
+  });
+  renderWeeksGrid();
+}
+
+function renderRoadmap() {
+  const wn = getCurrentWeek();
+  let html = `
+    <div class="topbar"><div class="topbar-title">// <span>52-Week Roadmap</span></div></div>
+    <div class="phase-tabs">
+      <div class="pt ${S.phase===1?'p1a':''}" data-p="1" onclick="switchPhase(1)">■ Phase I — Foundation (W1-13)</div>
+      <div class="pt ${S.phase===2?'p2a':''}" data-p="2" onclick="switchPhase(2)">■ Phase II — Specialization (W14-26)</div>
+      <div class="pt ${S.phase===3?'p3a':''}" data-p="3" onclick="switchPhase(3)">■ Phase III — Pro & Career (W27-52)</div>
+    </div>
+    <div class="weeks-grid" id="weeks-grid"></div>`;
+  document.getElementById('v-roadmap').innerHTML = html;
+  renderWeeksGrid();
+}
+
+function renderWeeksGrid() {
+  const wn = getCurrentWeek();
+  const filtered = WEEKS_DATA.filter(w => w.phase === S.phase);
+  const grid = document.getElementById('weeks-grid');
+  if(!grid) return;
+  grid.innerHTML = filtered.map(w => {
+    const prog = getWeekProgress(w.num);
+    const isCur = w.num === wn;
+    const isOpen = isCur;
+    const daysHtml = w.days.map(d => {
+      const key = `w${w.num}_${d.d}`;
+      const done = S.tasks[key];
+      return `<div class="dr ${done?'done':''}" onclick="toggleTask('${key}');event.stopPropagation()">
+        <div class="dname">${d.d}</div>
+        <div class="task-badge badge-${d.t}" style="margin-top:1px">${d.t.toUpperCase()}</div>
+        <div class="dr-task">${d.task}</div>
+        <div class="task-cb ${done?'done':''}" style="flex-shrink:0;margin-top:2px"></div>
+      </div>`;
+    }).join('');
+    return `<div class="wc p${w.phase} ${isCur?'cur':''} ${isOpen?'open':''}" id="rwk${w.num}">
+      ${isCur?'<div class="cur-banner">▶ CURRENT WEEK — ACTIVE</div>':''}
+      <div class="wh" onclick="toggleWeek(${w.num})">
+        <div class="wnum">W${String(w.num).padStart(2,'0')}</div>
+        <div class="wi">
+          <div class="wtopic">${w.topic}</div>
+          <div class="wdates">${w.dates}</div>
+          <div class="wprog"><div class="wprogf" style="width:${prog}%"></div></div>
+        </div>
+        <div style="font-size:0.6rem;color:var(--muted);margin-left:0.5rem">${prog}%</div>
+        <div class="wtog">▼</div>
+      </div>
+      <div class="wdays">${daysHtml}</div>
+    </div>`;
+  }).join('');
+
+  // scroll to current
+  setTimeout(() => {
+    const el = document.getElementById(`rwk${wn}`);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  }, 100);
+}
+
+function toggleWeek(n) {
+  const el = document.getElementById(`rwk${n}`);
+  if(el) el.classList.toggle('open');
+}
+
+// ===== SKILLS VIEW =====
+function renderSkills() {
+  const skills = calcSkills();
+  const allRooms = getAllRooms();
+  let html = `<div class="topbar"><div class="topbar-title">// <span>Skill Matrix</span></div><div class="topbar-right">${allRooms.size} rooms completed</div></div>`;
+  html += `<div class="card"><div class="card-title">تقدم المهارات — محسوب من الرومات المكتملة</div>`;
+
+  SKILLS_DEF.forEach(sk => {
+    const pct = skills[sk.id] || 0;
+    const doneRooms = sk.rooms.filter(r => allRooms.has(r));
+    const grad = `linear-gradient(90deg, ${sk.color}, ${sk.color}88)`;
+    html += `<div class="skill-row">
+      <div class="skill-header">
+        <div class="skill-name"><span class="skill-icon">${sk.icon}</span>${sk.ar}</div>
+        <div class="skill-pct" style="color:${sk.color}">${pct}%</div>
+      </div>
+      <div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${grad}"></div></div>
+      <div class="skill-meta">
+        <span>${doneRooms.length}/${sk.rooms.length} rooms</span>
+        <span>${pct<30?'🔴 مبتدئ':pct<60?'🟡 متوسط':pct<80?'🟢 جيد':'💚 متقدم'}</span>
+      </div>
+      ${doneRooms.length > 0 ? `<div class="skill-rooms">${doneRooms.slice(0,5).join(' · ')}${doneRooms.length>5?` +${doneRooms.length-5} more`:''}</div>` : ''}
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  // Top 5 skills mini chart
+  const sorted = SKILLS_DEF.map(sk => ({...sk, pct: skills[sk.id]||0})).sort((a,b) => b.pct-a.pct);
+  html += `<div class="card" style="margin-top:1rem"><div class="card-title">أقوى 5 مهارات</div><div style="display:flex;flex-direction:column;gap:0.5rem">`;
+  sorted.slice(0,5).forEach((sk,i) => {
+    html += `<div style="display:flex;align-items:center;gap:1rem">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.55rem;color:var(--muted);min-width:18px">#${i+1}</div>
+      <div style="font-size:0.7rem;min-width:160px;font-family:'Cairo',sans-serif">${sk.icon} ${sk.ar}</div>
+      <div style="flex:1;height:4px;background:var(--border)"><div style="height:100%;background:${sk.color};width:${sk.pct}%"></div></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;color:${sk.color};min-width:32px">${sk.pct}%</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  document.getElementById('v-skills').innerHTML = html;
+  setTimeout(() => {
+    document.querySelectorAll('.skill-fill').forEach(el => el.style.width = el.style.width);
+  }, 50);
+}
+
+// ===== ROOMS VIEW =====
+function renderRooms() {
+  const allRooms = getAllRooms();
+  const allRoomsList = [...PRELOADED_ROOMS, ...S.extraRooms.filter(r => !PRELOADED_ROOMS.includes(r))];
+  const filtered = allRoomsList.filter(r => {
+    const matchSearch = S.roomSearch === '' || r.toLowerCase().includes(S.roomSearch.toLowerCase());
+    if(S.roomFilter === 'done') return allRooms.has(r) && matchSearch;
+    if(S.roomFilter === 'pending') return !allRooms.has(r) && matchSearch;
+    return matchSearch;
+  });
+
+  const totalAll = allRoomsList.length;
+  const totalDone = allRooms.size;
+
+  let html = `<div class="topbar"><div class="topbar-title">// <span>Room Tracker</span></div></div>
+    <div class="rooms-stats">
+      <div class="rooms-stat"><div class="rooms-stat-n">${totalDone}</div><div class="rooms-stat-l">Completed</div></div>
+      <div class="rooms-stat"><div class="rooms-stat-n">${totalAll}</div><div class="rooms-stat-l">Total Listed</div></div>
+      <div class="rooms-stat"><div class="rooms-stat-n" style="color:var(--cyan)">${Math.round(totalDone/totalAll*100)}%</div><div class="rooms-stat-l">Completion</div></div>
+    </div>
+    <div class="add-room-row">
+      <input class="add-room-input" id="newRoomInput" placeholder="Add new room name..." onkeydown="if(event.key==='Enter')addRoom()" />
+      <button class="btn-add" onclick="addRoom()">+ Add</button>
+    </div>
+    <div class="rooms-header">
+      <input class="rooms-search" placeholder="Search rooms..." oninput="S.roomSearch=this.value;renderRooms()" value="${S.roomSearch}" />
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn ${S.roomFilter==='all'?'active':''}" onclick="S.roomFilter='all';renderRooms()">ALL</button>
+      <button class="filter-btn ${S.roomFilter==='done'?'active':''}" onclick="S.roomFilter='done';renderRooms()">✅ DONE</button>
+      <button class="filter-btn ${S.roomFilter==='pending'?'active':''}" onclick="S.roomFilter='pending';renderRooms()">⏳ PENDING</button>
+    </div>
+    <div class="rooms-grid">`;
+
+  filtered.forEach(r => {
+    const done = allRooms.has(r);
+    // find relevant skills
+    const tags = SKILLS_DEF.filter(sk => sk.rooms.includes(r)).map(sk => sk.id);
+    html += `<div class="room-item ${done?'completed':''}" onclick="toggleRoom('${r.replace(/'/g,"\\'")}')">
+      <div class="room-dot"></div>
+      <div style="flex:1">
+        <div class="room-item-name">${r}</div>
+        ${tags.length?`<div class="room-tags">${tags.map(t=>`<span class="room-tag">${t}</span>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('v-rooms').innerHTML = html;
+}
+
+// ===== ACTIONS =====
+function toggleTask(key) {
+  S.tasks[key] = !S.tasks[key];
+  save('xenos_tasks', S.tasks);
+  renderView(S.view);
+}
+
+function toggleRoutine(type) {
+  const key = getTodayKey();
+  if(!S.routine[key]) S.routine[key] = {};
+  S.routine[key][type] = !S.routine[key][type];
+  save('xenos_routine', S.routine);
+  renderView(S.view);
+}
+
+function toggleRoom(name) {
+  const all = getAllRooms();
+  if(all.has(name)) {
+    if(PRELOADED_ROOMS.includes(name)) {
+      // pre-loaded — can't remove from preloaded but can mark as uncomplete via extra tracking
+      // For simplicity: just alert
+      return;
+    }
+    S.extraRooms = S.extraRooms.filter(r => r !== name);
+  } else {
+    if(!S.extraRooms.includes(name)) S.extraRooms.push(name);
+  }
+  save('xenos_extra', S.extraRooms);
+  renderView(S.view);
+}
+
+function addRoom() {
+  const inp = document.getElementById('newRoomInput');
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name) return;
+  if(!S.extraRooms.includes(name) && !PRELOADED_ROOMS.includes(name)) {
+    S.extraRooms.push(name);
+    save('xenos_extra', S.extraRooms);
+  }
+  inp.value = '';
+  renderRooms();
+}
+
+function saveNote(wn, text) {
+  S.notes[`w${wn}`] = text;
+  save('xenos_notes', S.notes);
+}
+
+function setRating(wn, r) {
+  const k = `w${wn}`;
+  S.ratings[k] = S.ratings[k] === r ? '' : r;
+  save('xenos_ratings', S.ratings);
+  renderView(S.view);
+}
+
+// ===== INIT =====
+loadState();
+nav(S.view);
+
+// Update sidebar week badge
+document.getElementById('sb-week').textContent = 'W'+String(getCurrentWeek()).padStart(2,'0');
+</script>
+</body>
+</html>
