@@ -1,9 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cyber Security Roadmap</title>
-
+<title>Cyber Security 52 Week Roadmap</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -11,70 +11,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;600&display=swap');
 
 *{
-box-sizing:border-box;
 margin:0;
 padding:0;
+box-sizing:border-box;
 }
 
 body{
 
 font-family:Inter;
-background:#0a0f1c;
+background:#0b0f1c;
 color:white;
-overflow-x:hidden;
 
 }
-
-/* BACKGROUND GRID */
-
-body:before{
-
-content:"";
-position:fixed;
-inset:0;
-
-background:
-linear-gradient(#00fff220 1px,transparent 1px),
-linear-gradient(90deg,#00fff220 1px,transparent 1px);
-
-background-size:40px 40px;
-
-animation:gridMove 20s linear infinite;
-
-z-index:-1;
-
-}
-
-@keyframes gridMove{
-
-from{transform:translateY(0)}
-to{transform:translateY(40px)}
-
-}
-
 
 /* HEADER */
 
 header{
 
-padding:40px;
 text-align:center;
+padding:40px;
 
 }
 
 header h1{
 
 font-family:Orbitron;
-font-size:42px;
-letter-spacing:2px;
-color:#00fff2;
+color:#00e5ff;
+font-size:40px;
 
 }
 
 header p{
 
-margin-top:10px;
 opacity:.7;
+margin-top:10px;
 
 }
 
@@ -88,37 +58,32 @@ padding:20px;
 
 }
 
+/* PROGRESS */
 
-/* STATS */
+.progress-box{
 
-.stats{
-
-display:flex;
-gap:20px;
 margin-bottom:40px;
-flex-wrap:wrap;
 
 }
 
-.stat{
+.progress{
 
-flex:1;
+height:14px;
 background:#11172a;
-padding:20px;
-border-radius:12px;
-
-box-shadow:
-0 0 15px #00fff210;
+border-radius:10px;
+overflow:hidden;
 
 }
 
-.stat h2{
+.progress-bar{
 
-color:#00fff2;
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#00e5ff,#4b8cff);
 
 }
 
-/* WEEK GRID */
+/* GRID */
 
 .grid{
 
@@ -130,39 +95,42 @@ gap:20px;
 
 /* WEEK CARD */
 
-.week{
+.week-card{
 
 background:#11172a;
-border-radius:14px;
 padding:20px;
+border-radius:12px;
 cursor:pointer;
-
-transition:.3s;
-
-position:relative;
-
-overflow:hidden;
+transition:.25s;
 
 }
 
-.week:hover{
+.week-card:hover{
 
-transform:translateY(-6px);
-box-shadow:0 10px 30px #00fff230;
+transform:translateY(-5px);
+box-shadow:0 10px 25px #00e5ff33;
 
 }
 
-.week h3{
+.week-header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+}
+
+.week-title{
 
 font-family:Orbitron;
-color:#00fff2;
+color:#00e5ff;
 
 }
 
-.topic{
+.week-topic{
 
 opacity:.7;
-margin-top:6px;
+margin-top:4px;
 
 }
 
@@ -170,14 +138,14 @@ margin-top:6px;
 
 .days{
 
-margin-top:15px;
 display:none;
 flex-direction:column;
-gap:10px;
+gap:8px;
+margin-top:15px;
 
 }
 
-.week.open .days{
+.week-card.open .days{
 
 display:flex;
 
@@ -185,61 +153,21 @@ display:flex;
 
 .day{
 
+background:#0d1324;
+padding:8px;
+border-radius:6px;
 display:flex;
+gap:8px;
 align-items:center;
-gap:10px;
-
-background:#0d1324;
-padding:8px 10px;
-border-radius:8px;
 
 }
-
-.day input{
-
-transform:scale(1.2);
-
-}
-
-/* PROGRESS BAR */
-
-.progress{
-
-height:12px;
-background:#0d1324;
-border-radius:8px;
-margin-top:20px;
-overflow:hidden;
-
-}
-
-.bar{
-
-height:100%;
-width:0%;
-background:linear-gradient(90deg,#00fff2,#4b8cff);
-
-transition:.4s;
-
-}
-
-
-/* FOOTER */
 
 footer{
 
 margin-top:60px;
-padding:30px;
 text-align:center;
+padding:30px;
 opacity:.6;
-
-}
-
-/* RESPONSIVE */
-
-@media(max-width:700px){
-
-header h1{font-size:28px}
 
 }
 
@@ -251,155 +179,108 @@ header h1{font-size:28px}
 <header>
 
 <h1>Cyber Security Roadmap</h1>
-<p>Interactive learning map</p>
+<p>52 Week Learning Plan</p>
 
 </header>
 
 
 <div class="container">
 
-<div class="stats">
-
-<div class="stat">
-<h2 id="done">0</h2>
-<p>Tasks Done</p>
-</div>
-
-<div class="stat">
-<h2 id="total">0</h2>
-<p>Total Tasks</p>
-</div>
-
-<div class="stat">
-<h2 id="percent">0%</h2>
-<p>Progress</p>
-</div>
-
-</div>
-
+<div class="progress-box">
 
 <div class="progress">
-<div class="bar" id="bar"></div>
+<div class="progress-bar" id="bar"></div>
 </div>
 
-
-<br><br>
+</div>
 
 <div class="grid" id="weeks"></div>
 
 </div>
 
-
 <footer>
-Cyber Roadmap — Smart Interactive Planner
+Interactive Cyber Security Learning Map
 </footer>
 
 
 <script>
 
-const roadmap=[
+const topics=[
 
-{
-week:1,
-topic:"Linux Fundamentals",
-days:[
-"Linux basics",
-"Filesystem",
-"Permissions",
-"Bash commands",
-"Networking basics"
-]
-},
-
-{
-week:2,
-topic:"Networking",
-days:[
-"OSI model",
-"TCP/IP",
-"Ports & protocols",
-"Packet analysis",
-"Wireshark"
-]
-},
-
-{
-week:3,
-topic:"Python for Security",
-days:[
-"Python basics",
-"Automation scripts",
-"Port scanner",
-"Log parser",
-"Mini project"
-]
-},
-
-{
-week:4,
-topic:"Web Security",
-days:[
-"HTTP protocol",
+"Linux Fundamentals",
+"Networking",
+"Python Security",
+"Web Security",
 "Burp Suite",
-"XSS basics",
-"SQL injection",
-"Web lab"
-]
-},
-
-{
-week:5,
-topic:"Privilege Escalation",
-days:[
-"Linux privesc",
-"Sudo abuse",
-"SUID binaries",
-"Enumeration",
-"Practice lab"
-]
-},
-
-{
-week:6,
-topic:"Active Directory",
-days:[
-"AD basics",
+"SQL Injection",
+"XSS",
+"Authentication",
+"Privilege Escalation",
+"Linux PrivEsc",
+"Windows PrivEsc",
+"Active Directory",
+"Kerberos",
+"Lateral Movement",
 "BloodHound",
-"Kerberos attacks",
-"Lateral movement",
-"Lab"
-]
-}
+"Metasploit",
+"Nmap",
+"Wireshark",
+"Packet Analysis",
+"Reverse Shells",
+"Enumeration",
+"Password Attacks",
+"Hash Cracking",
+"Hydra",
+"John the Ripper",
+"Cryptography",
+"TLS",
+"JWT",
+"API Security",
+"OWASP Top 10",
+"File Upload Attacks",
+"Command Injection",
+"SSRF",
+"XXE",
+"Bug Bounty",
+"Reconnaissance",
+"Subdomain Enumeration",
+"OSINT",
+"Cloud Security",
+"AWS Security",
+"Docker Security",
+"Kubernetes Security",
+"Mobile Security",
+"Android Security",
+"iOS Security",
+"Binary Exploitation",
+"Buffer Overflow",
+"ROP Chains",
+"Malware Analysis",
+"Threat Hunting",
+"Blue Team Basics",
+"Final Projects"
 
 ];
 
-
 const weeksEl=document.getElementById("weeks");
 
-const doneEl=document.getElementById("done");
-const totalEl=document.getElementById("total");
-const percentEl=document.getElementById("percent");
-const bar=document.getElementById("bar");
-
-
-let saved=JSON.parse(localStorage.getItem("progress"))||{};
+let progress=JSON.parse(localStorage.getItem("roadmap"))||{};
 
 function build(){
 
 weeksEl.innerHTML="";
 
-roadmap.forEach((w,i)=>{
+topics.forEach((topic,i)=>{
 
-const card=document.createElement("div");
-card.className="week";
+const week=i+1;
 
 let daysHTML="";
 
-w.days.forEach((d,di)=>{
+for(let d=1; d<=5; d++){
 
-const key=`${i}-${di}`;
+const key=`${week}-${d}`;
 
-const checked=saved[key]?"checked":"";
+const checked=progress[key]?"checked":"";
 
 daysHTML+=`
 
@@ -407,18 +288,32 @@ daysHTML+=`
 
 <input type="checkbox" data-key="${key}" ${checked}>
 
-<span>${d}</span>
+<span>Day ${d} practice</span>
 
 </div>
 
 `;
 
-});
+}
+
+const card=document.createElement("div");
+
+card.className="week-card";
 
 card.innerHTML=`
 
-<h3>Week ${w.week}</h3>
-<div class="topic">${w.topic}</div>
+<div class="week-header">
+
+<div>
+
+<div class="week-title">Week ${week}</div>
+<div class="week-topic">${topic}</div>
+
+</div>
+
+<div>▼</div>
+
+</div>
 
 <div class="days">
 
@@ -439,6 +334,7 @@ weeksEl.appendChild(card);
 });
 
 attach();
+
 update();
 
 }
@@ -449,9 +345,9 @@ document.querySelectorAll("input").forEach(cb=>{
 
 cb.addEventListener("change",()=>{
 
-saved[cb.dataset.key]=cb.checked;
+progress[cb.dataset.key]=cb.checked;
 
-localStorage.setItem("progress",JSON.stringify(saved));
+localStorage.setItem("roadmap",JSON.stringify(progress));
 
 update();
 
@@ -461,20 +357,15 @@ update();
 
 }
 
-
 function update(){
 
-const total=roadmap.reduce((a,w)=>a+w.days.length,0);
+const total=52*5;
 
-const done=Object.values(saved).filter(v=>v).length;
+const done=Object.values(progress).filter(v=>v).length;
 
 const percent=Math.floor(done/total*100);
 
-doneEl.innerText=done;
-totalEl.innerText=total;
-percentEl.innerText=percent+"%";
-
-bar.style.width=percent+"%";
+document.getElementById("bar").style.width=percent+"%";
 
 }
 
@@ -484,3 +375,4 @@ build();
 
 </body>
 </html>
+```
