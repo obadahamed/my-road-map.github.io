@@ -133,6 +133,7 @@ const S = {
   view: 'today',
   phase: 1,
   roomFilter: 'all',
+  roomThmFilter: false,
   roomSearch: '',
   roadmapSearch: ''
 };
@@ -334,6 +335,7 @@ function renderView(v) {
   else if (v === 'roadmap') renderRoadmap();
   else if (v === 'skills') renderSkills();
   else if (v === 'rooms') renderRooms();
+  else if (v === 'resources') renderResources();
 }
 
 // ===== SMART PLAN =====
@@ -461,7 +463,89 @@ function importBackup(file) {
   reader.readAsText(file);
 }
 
-// ===== ESCAPE HELPERS =====
+// ===== EXPORT MARKDOWN =====
+function exportMarkdown() {
+  const wn = getCurrentWeek();
+  const weeks = window.WEEKS_DATA || [];
+  const wk = weeks.find(w => w.num === wn);
+  const note = S.notes[`w${wn}`] || '';
+  const rating = S.ratings[`w${wn}`] || '';
+  const ratingMap = { all: 'أنجزت الكل', most: 'معظم المهام', delayed: 'تأخيرات', '': 'غير محدد' };
+
+  const days = wk ? (wk.days || []).filter(d => d.d !== 'الجمعة') : [];
+  const doneTasks = days.filter(d => S.tasks[`w${wn}_${d.d}`]);
+  const tasksBlock = days.map(d => {
+    const done = S.tasks[`w${wn}_${d.d}`];
+    return `- [${done ? 'x' : ' '}] **${d.d}** — ${d.task} \`${d.t.toUpperCase()}\``;
+  }).join('\n');
+
+  const md = [
+    `# ξένο · Red Team Journey — Week ${wn}`,
+    ``,
+    `**الموضوع / Topic:** ${wk ? wk.topic : '—'}`,
+    `**الفترة / Dates:** ${wk ? wk.dates : '—'}`,
+    `**التقييم / Rating:** ${ratingMap[rating] || rating}`,
+    `**المهام المنجزة / Completed tasks:** ${doneTasks.length} / ${days.length}`,
+    ``,
+    `---`,
+    ``,
+    `## المهام / Tasks`,
+    ``,
+    tasksBlock || '_لا توجد مهام_',
+    ``,
+    `---`,
+    ``,
+    `## الملاحظات / Notes`,
+    ``,
+    note || '_لا توجد ملاحظات_',
+    ``,
+    `---`,
+    ``,
+    `_Exported from ξένο Red Team Dashboard · ${new Date().toISOString().split('T')[0]}_`
+  ].join('\n');
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `week-${String(wn).padStart(2,'0')}-notes-${getTodayKey()}.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ===== ABOUT MODAL =====
+function showAbout() {
+  const m = document.getElementById('about-modal');
+  if (!m) return;
+  m.style.display = 'flex';
+  // Move focus to close button for keyboard/screen reader users
+  const closeBtn = m.querySelector('.modal-close');
+  if (closeBtn) closeBtn.focus();
+}
+function closeAbout() {
+  const m = document.getElementById('about-modal');
+  if (m) m.style.display = 'none';
+}
+function handleModalOverlayClick(event) {
+  if (event.target === event.currentTarget) closeAbout();
+}
+// Trap Tab focus within the modal when it is open; Escape closes it
+document.addEventListener('keydown', function trapFocus(e) {
+  const m = document.getElementById('about-modal');
+  if (!m || m.style.display === 'none') return;
+  if (e.key === 'Escape') { closeAbout(); return; }
+  if (e.key !== 'Tab') return;
+  const focusable = Array.from(m.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )).filter(el => !el.disabled);
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
 function escapeHTML(s) {
   return String(s)
     .replaceAll("&","&amp;").replaceAll("<","&lt;")
@@ -500,6 +584,7 @@ function renderToday() {
       <div class="topbar-title">اليوم <span>/ Today</span></div>
       <div class="topbar-right">
         <span class="pill">📅 ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+        <button class="mini-btn" onclick="exportMarkdown()" title="تصدير الملاحظات بصيغة Markdown">↓ Export MD</button>
         <button class="mini-btn" onclick="exportBackup()" title="تصدير نسخة احتياطية">↓ Backup</button>
         <label class="mini-btn" style="cursor:pointer" title="استيراد نسخة احتياطية">
           ↑ Restore<input type="file" accept="application/json" style="display:none" onchange="importBackup(this.files[0])" />
@@ -621,16 +706,43 @@ function renderToday() {
 
     <div class="grid-2" style="margin-bottom:1.25rem">
       <div class="card">
-        <div class="card-title"><span class="card-title-icon">🎯</span> Bonus Room</div>
-        <div class="bonus-room">
-          <div class="bonus-icon">🔵</div>
-          <div>
-            <div class="bonus-label">Room of the Day</div>
-            <div class="bonus-name">${escapeHTML(bonus)}</div>
-            <a href="https://tryhackme.com/r/search?search=${encodeURIComponent(bonus)}" target="_blank" class="bonus-link">Open on THM ↗</a>
-          </div>
-        </div>
-      </div>
+        <div class="card-title"><span class="card-title-icon">⚡</span> Quick Links — TryHackMe</div>
+        <div class="quick-links-list">`;
+
+  // Today's THM task
+  if (todayDay && todayDay.t === 'thm') {
+    html += `<a class="quick-link-item" href="https://tryhackme.com/r/search?search=${encodeURIComponent(todayDay.task)}" target="_blank" rel="noopener">
+      <span class="ql-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <span class="ql-text"><span class="ql-label">مهمة اليوم على THM</span><span class="ql-sub">${escapeHTML(todayDay.task)}</span></span>
+      <span class="ql-arrow">↗</span>
+    </a>`;
+  } else {
+    html += `<div class="quick-link-item disabled">
+      <span class="ql-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <span class="ql-text"><span class="ql-label">مهمة اليوم على THM</span><span class="ql-sub">${todayDay ? 'المهمة ليست من نوع THM' : 'لا توجد مهمة اليوم'}</span></span>
+    </div>`;
+  }
+
+  html += `<a class="quick-link-item" href="https://tryhackme.com/r/search?search=${encodeURIComponent(bonus)}" target="_blank" rel="noopener">
+      <span class="ql-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </span>
+      <span class="ql-text"><span class="ql-label">Bonus Room of the Day</span><span class="ql-sub">${escapeHTML(bonus)}</span></span>
+      <span class="ql-arrow">↗</span>
+    </a>
+    <a class="quick-link-item" href="https://tryhackme.com" target="_blank" rel="noopener">
+      <span class="ql-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </span>
+      <span class="ql-text"><span class="ql-label">TryHackMe — الرئيسية</span></span>
+      <span class="ql-arrow">↗</span>
+    </a>
+  </div>
+</div>
 
       <div class="card">
         <div class="card-title"><span class="card-title-icon">💡</span> نصيحة ذكية</div>
@@ -644,7 +756,7 @@ function renderToday() {
     <div class="card-title"><span class="card-title-icon">📋</span> مهام اليوم — ${dayName}</div>`;
   if (!todayDay) {
     html += dayName === 'الجمعة'
-      ? `<div class="empty-state">🌿 يوم الراحة — استرح وأعد شحن طاقتك</div>`
+      ? `<div class="empty-state">يوم الراحة — استرح وأعد شحن طاقتك</div>`
       : `<div class="empty-state">لا توجد مهمة محددة لهذا اليوم.</div>`;
   } else {
     const key = `w${wn}_${todayDay.d}`;
@@ -705,9 +817,9 @@ function renderToday() {
     <div class="card-title"><span class="card-title-icon">📝</span> ملاحظات الأسبوع ${wn}</div>
     <textarea class="week-notes" placeholder="اكتب ملاحظاتك هنا..." onchange="saveNote(${wn},this.value)">${noteVal}</textarea>
     <div class="rating-row">
-      <button class="rating-btn ${rating==='all'?'active-all':''}" onclick="setRating(${wn},'all')">✅ أنجزت الكل</button>
-      <button class="rating-btn ${rating==='most'?'active-most':''}" onclick="setRating(${wn},'most')">🟡 معظم المهام</button>
-      <button class="rating-btn ${rating==='delayed'?'active-delayed':''}" onclick="setRating(${wn},'delayed')">🔴 تأخيرات</button>
+      <button class="rating-btn ${rating==='all'?'active-all':''}" onclick="setRating(${wn},'all')">أنجزت الكل</button>
+      <button class="rating-btn ${rating==='most'?'active-most':''}" onclick="setRating(${wn},'most')">معظم المهام</button>
+      <button class="rating-btn ${rating==='delayed'?'active-delayed':''}" onclick="setRating(${wn},'delayed')">تأخيرات</button>
     </div>
   </div>`;
 
@@ -897,17 +1009,27 @@ function renderSkills() {
 }
 
 // ===== ROOMS VIEW =====
+// Set of rooms used in THM tasks (type 'thm') across all weeks
+function getThmRoomSet() {
+  const weeks = window.WEEKS_DATA || [];
+  const set = new Set(PRELOADED_ROOMS); // All preloaded rooms are THM rooms
+  weeks.forEach(w => (w.days || []).forEach(d => { if (d.t === 'thm') set.add(d.task); }));
+  return set;
+}
+
 function renderRooms() {
   const catalog = getRoomsCatalogList();
   const stats = countRooms();
+  const thmSet = getThmRoomSet();
 
   const filtered = catalog.filter(r => {
     const st = getRoomState(r);
     const matchSearch = S.roomSearch === '' || r.toLowerCase().includes(S.roomSearch.toLowerCase());
-    if (S.roomFilter === 'done') return st === "done" && matchSearch;
-    if (S.roomFilter === 'inprogress') return st === "inprogress" && matchSearch;
-    if (S.roomFilter === 'pending') return st === "pending" && matchSearch;
-    return matchSearch;
+    const matchThm = !S.roomThmFilter || thmSet.has(r);
+    if (S.roomFilter === 'done') return st === "done" && matchSearch && matchThm;
+    if (S.roomFilter === 'inprogress') return st === "inprogress" && matchSearch && matchThm;
+    if (S.roomFilter === 'pending') return st === "pending" && matchSearch && matchThm;
+    return matchSearch && matchThm;
   });
 
   let html = `
@@ -933,23 +1055,28 @@ function renderRooms() {
       <button class="filter-btn ${S.roomFilter==='pending'?'active':''}" onclick="S.roomFilter='pending';renderRooms()">لم تبدأ</button>
       <button class="filter-btn ${S.roomFilter==='inprogress'?'active':''}" onclick="S.roomFilter='inprogress';renderRooms()">جاري</button>
       <button class="filter-btn ${S.roomFilter==='done'?'active':''}" onclick="S.roomFilter='done';renderRooms()">منجز</button>
+      <button class="filter-btn thm-toggle ${S.roomThmFilter?'active-thm':''}" onclick="S.roomThmFilter=!S.roomThmFilter;renderRooms()" title="عرض رومات TryHackMe فقط">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        THM فقط
+      </button>
     </div>
     <div class="rooms-grid">`;
 
   filtered.forEach(r => {
     const st = getRoomState(r);
     const tags = SKILLS_DEF.filter(sk => sk.rooms.includes(r)).map(sk => sk.id);
+    const isThm = thmSet.has(r);
 
     html += `<div class="room-item" data-state="${st}">
       <div class="room-dot"></div>
       <div style="flex:1;min-width:0">
-        <div class="room-item-name">${escapeHTML(r)}</div>
+        <div class="room-item-name">${escapeHTML(r)}${isThm ? '<span class="room-thm-badge">THM</span>' : ''}</div>
         ${tags.length ? `<div class="room-tags">${tags.map(t => `<span class="room-tag">${escapeHTML(t)}</span>`).join('')}</div>` : ''}
         <div class="room-actions">
           <button class="state-btn pd ${st==='pending'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','pending')">pending</button>
           <button class="state-btn ip ${st==='inprogress'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','inprogress')">in progress</button>
           <button class="state-btn ${st==='done'?'active':''}" onclick="event.stopPropagation();updateRoom('${escapeJS(r)}','done')">done</button>
-          <a class="state-btn" style="text-decoration:none" target="_blank" href="https://tryhackme.com/r/search?search=${encodeURIComponent(r)}" onclick="event.stopPropagation()">open ↗</a>
+          <a class="state-btn" style="text-decoration:none" target="_blank" rel="noopener" href="https://tryhackme.com/r/search?search=${encodeURIComponent(r)}" onclick="event.stopPropagation()">open ↗</a>
         </div>
       </div>
     </div>`;
@@ -958,6 +1085,7 @@ function renderRooms() {
   html += `</div>`;
   document.getElementById('v-rooms').innerHTML = html;
 }
+
 
 function updateRoom(name, st) {
   setRoomState(name, st);
@@ -1011,7 +1139,97 @@ function setRating(wn, r) {
   renderView(S.view);
 }
 
-// ===== FOCUS TIMER UI =====
+// ===== RESOURCES VIEW =====
+const RESOURCES = [
+  {
+    id: 'thm',
+    title: 'TryHackMe',
+    desc: 'منصة تعليم الأمن السيبراني التفاعلية — غرف موجّهة للمبتدئين والمحترفين',
+    url: 'https://tryhackme.com',
+    label: 'فتح TryHackMe',
+    color: '#60a5fa',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`
+  },
+  {
+    id: 'portswigger',
+    title: 'PortSwigger Web Security Academy',
+    desc: 'تعلم اختبار اختراق الويب مجانًا — المصدر الرسمي لـ Burp Suite',
+    url: 'https://portswigger.net/web-security',
+    label: 'فتح Web Academy',
+    color: '#f97316',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`
+  },
+  {
+    id: 'owasp',
+    title: 'OWASP Top 10',
+    desc: 'قائمة أهم 10 ثغرات في تطبيقات الويب — مرجع أساسي لكل مختبر اختراق',
+    url: 'https://owasp.org/www-project-top-ten/',
+    label: 'فتح OWASP',
+    color: '#10b981',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+  },
+  {
+    id: 'ctftime',
+    title: 'CTFtime',
+    desc: 'متتبع مسابقات CTF العالمية — جدول المسابقات القادمة والنتائج',
+    url: 'https://ctftime.org',
+    label: 'فتح CTFtime',
+    color: '#a78bfa',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
+  },
+  {
+    id: 'vulnhub',
+    title: 'VulnHub',
+    desc: 'أجهزة افتراضية قابلة للاختراق — مناسبة للتدريب المحلي الأوف‌لاين',
+    url: 'https://www.vulnhub.com',
+    label: 'فتح VulnHub',
+    color: '#f59e0b',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`
+  },
+  {
+    id: 'htb',
+    title: 'Hack The Box',
+    desc: 'منصة CTF متقدمة — أجهزة حقيقية للمحترفين وفرق Red Team',
+    url: 'https://www.hackthebox.com',
+    label: 'فتح HTB',
+    color: '#34d399',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>`
+  },
+  {
+    id: 'mitre',
+    title: 'MITRE ATT&CK',
+    desc: 'إطار معرفي شامل لتكتيكات وتقنيات المهاجمين — مرجع Red Team الأساسي',
+    url: 'https://attack.mitre.org',
+    label: 'فتح ATT&CK',
+    color: '#ef4444',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>`
+  }
+];
+
+function renderResources() {
+  const cardsHtml = RESOURCES.map(r => `
+    <div class="resource-card">
+      <div class="resource-icon" style="color:${r.color};border-color:${r.color}22;background:${r.color}12">${r.icon}</div>
+      <div class="resource-body">
+        <div class="resource-title">${escapeHTML(r.title)}</div>
+        <div class="resource-desc">${escapeHTML(r.desc)}</div>
+      </div>
+      <a class="resource-btn" href="${r.url}" target="_blank" rel="noopener" style="--rc:${r.color}">${escapeHTML(r.label)} ↗</a>
+    </div>
+  `).join('');
+
+  document.getElementById('v-resources').innerHTML = `
+    <div class="topbar">
+      <div class="topbar-title">المصادر <span>/ Resources</span></div>
+    </div>
+    <p style="font-family:'Cairo',sans-serif;color:var(--text2);font-size:0.85rem;margin-bottom:1.5rem;line-height:1.8">
+      روابط مختارة لأهم منصات ومراجع تعلم Red Team والأمن السيبراني.
+    </p>
+    <div class="resources-grid">${cardsHtml}</div>
+  `;
+}
+
+
 function updateFocusUI() {
   const t = document.getElementById("focus-time");
   const f = document.getElementById("focus-fill");

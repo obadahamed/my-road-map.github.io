@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Road Map - Red Team Journey</title>
+  <title>ξένο — Red Team Journey 2026</title>
   <meta name="description" content="خارطة طريق تعلم Red Team / Cybersecurity - متابعة أسبوعية لمدة 52 أسبوع" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,43 +18,73 @@
   <!-- SIDEBAR -->
   <nav class="sidebar" aria-label="التنقل الرئيسي">
     <div class="sb-brand">
-      <div class="sb-brand-name">Road <span class="sb-brand-accent">Map</span></div>
-      <div class="sb-brand-sub">Red Team Journey · 52 Weeks</div>
+      <div class="sb-brand-name">ξένο <span class="sb-brand-accent">·</span> Red Team</div>
+      <div class="sb-brand-sub">52-Week Journey · 2026</div>
       <div class="sb-week-badge" id="sb-week">W--</div>
     </div>
 
     <div class="sb-nav">
-      <div class="sb-item active" data-view="today" onclick="nav('today')">
+      <button class="sb-item active" data-view="today" onclick="nav('today')">
         <span class="sb-icon">📅</span>
         <span>اليوم</span>
-      </div>
-      <div class="sb-item" data-view="roadmap" onclick="nav('roadmap')">
+      </button>
+      <button class="sb-item" data-view="roadmap" onclick="nav('roadmap')">
         <span class="sb-icon">🗺</span>
         <span>الخارطة</span>
-      </div>
-      <div class="sb-item" data-view="skills" onclick="nav('skills')">
+      </button>
+      <button class="sb-item" data-view="skills" onclick="nav('skills')">
         <span class="sb-icon">📊</span>
         <span>المهارات</span>
-      </div>
-      <div class="sb-item" data-view="rooms" onclick="nav('rooms')">
+      </button>
+      <button class="sb-item" data-view="rooms" onclick="nav('rooms')">
         <span class="sb-icon">🏠</span>
         <span>الرومات</span>
-      </div>
+      </button>
+      <button class="sb-item" data-view="resources" onclick="nav('resources')">
+        <span class="sb-icon">🔗</span>
+        <span>المصادر</span>
+      </button>
     </div>
 
     <div class="sb-footer">
-      <div>obadahamed.github.io</div>
-      <div style="margin-top:0.25rem;color:var(--dim)">52 weeks · Red Team</div>
+      <button class="sb-about-btn" onclick="showAbout()" aria-label="عن الداشبورد">عن الداشبورد</button>
     </div>
   </nav>
 
   <!-- MAIN CONTENT -->
   <main class="main" role="main">
-    <div id="v-today"  class="view active"></div>
-    <div id="v-roadmap" class="view"></div>
-    <div id="v-skills"  class="view"></div>
-    <div id="v-rooms"   class="view"></div>
+    <div id="v-today"     class="view active"></div>
+    <div id="v-roadmap"   class="view"></div>
+    <div id="v-skills"    class="view"></div>
+    <div id="v-rooms"     class="view"></div>
+    <div id="v-resources" class="view"></div>
   </main>
+
+  <!-- ABOUT MODAL -->
+  <div id="about-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="about-title" style="display:none" onclick="handleModalOverlayClick(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="about-title">ξένο <span style="color:var(--accent)">·</span> Red Team Dashboard</div>
+        <button class="modal-close" onclick="closeAbout()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-family:'Cairo',sans-serif;line-height:1.9;color:var(--text2);margin-bottom:1rem">
+          هذه لوحة تحكم شخصية لمتابعة رحلة تعلم Red Team / Cybersecurity خلال 52 أسبوعًا في 2026.
+          تشمل تتبع المهام اليومية، والرومات (TryHackMe وما يشابهها)، وملاحظات أسبوعية، ومؤشرات المهارات.
+        </p>
+        <p style="line-height:1.8;color:var(--muted);font-size:0.82rem">
+          A personal dashboard tracking a 52-week Red Team learning journey in 2026.
+          Built with plain HTML / CSS / JS — no frameworks, no build tools. Data lives in localStorage.
+        </p>
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;flex-wrap:wrap">
+          <span class="pill">HTML / CSS / JS</span>
+          <span class="pill">localStorage</span>
+          <span class="pill">GitHub Pages</span>
+          <span class="pill">TryHackMe</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- DATA: WEEKS_DATA (loaded first) -->
   <script src="assets/data/weeks-data.js"></script>
